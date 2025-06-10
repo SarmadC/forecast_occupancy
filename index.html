@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Occupancy Forecasting Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/index.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!--Header-->
+        <div class="header">
+            <div class="title-section">
+                <h1>Occupancy Forecasting Dashboard</h1>
+                <p>Forward Looking Analytics</p>
+            </div>
+
+            <div class="fitlers">
+                <div class="filter-group">
+                        <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <select id="asOfDateFilter">
+                            <option value="2024-12-10">As of Dec 10, 2024</option>
+                            <option value="2024-12-03">As of Dec 03, 2024</option>
+                            <option value="2024-11-26">As of Nov 26, 2024</option>
+                        </select>
+
+                <div class="filter-group">
+                    <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <select id="cityFilter">
+                        <option value="Edmonton">Edmonton</option>
+                        <option value="Calgary">Calgary</option>
+                        <option value="Vancouver">Vancouver</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                        <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <select id="horizonFilter">
+                            <option value="All">All Horizons</option>
+                            <option value="Near_Term">Near Term (0-30 days)</option>
+                            <option value="Medium_Term">Medium Term (31-90 days)</option>
+                            <option value="Long_Term">Long Term (90+ days)</option>
+                        </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Current Avg Occupancy</h3>
+                        <div class="metric-value" id="'avgOccupancy">72.5%</div>
+                        <div class="metric-subtitle">As of selected date</div>
+                        <div class="trend positive">
+                            <span>↗</span> +3.2% vs last week
+                        </div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Forecast Accuracy</h3>
+                        <div class="metric-value" id="forecastAccuracy">89.7%</div>
+                        <div class="metric-subtitle">Last 30 days</div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        
+         <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Next Week Outlook</h3>
+                        <div class="metric-value" id="nextWeekForecast">75.8%</div>
+                        <div class="metric-subtitle">7-day forecast</div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Strongest Segment</h3>
+                        <div class="metric-value" id="strongestSegment">Transient</div>
+                        <div class="metric-subtitle">By volume</div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Forecast Range</h3>
+                        <div class="metric-value" id="forecastRange">5-45</div>
+                        <div class="metric-subtitle">Days out</div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Weekly Change</h3>
+                        <div class="metric-value" id="weeklyChange">+3.2%</div>
+                        <div class="metric-subtitle">vs last report</div>
+                        <div class="trend positive">
+                            <span>↗</span> +3.2% vs last week
+                        </div>
+                    </div>
+                    <div class="metric-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+           <!-- Main Charts Section -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    <h3>Forecast Evolution: Dec 15th Occupancy</h3>
+                </div>
+                <div class="chart-subtitle">How predictions for the same date changed over time</div>
+                <canvas id="evolutionChart" class="chart-canvas"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3>Forecast Accuracy</h3>
+                </div>
+                <div class="chart-subtitle">By forecast horizon</div>
+                <canvas id="accuracyChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis Section -->
+        <div class="detailed-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #8b5cf6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3>30-Day Forecast Outlook</h3>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-header">Sun</div>
+                    <div class="calendar-header">Mon</div>
+                    <div class="calendar-header">Tue</div>
+                    <div class="calendar-header">Wed</div>
+                    <div class="calendar-header">Thu</div>
+                    <div class="calendar-header">Fri</div>
+                    <div class="calendar-header">Sat</div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar days will be generated by JavaScript -->
+                </div>
+                <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
+                    <div style="display: flex; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <div style="width: 12px; height: 12px; background: #d1fae5; border-radius: 2px;"></div>
+                            <span>High (80%+)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <div style="width: 12px; height: 12px; background: #fef3c7; border-radius: 2px;"></div>
+                            <span>Medium (60-80%)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <div style="width: 12px; height: 12px; background: #fee2e2; border-radius: 2px;"></div>
+                            <span>Low (<60%)</span>
+                        </div>
+                    </div>
+                    <div style="color: #3b82f6;">🔵 Weekends</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #f97316;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <h3>Market Segment Performance</h3>
+                </div>
+                <div class="segment-list" id="segmentList">
+                    <!-- Segment items will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts and Insights Section -->
+        <div class="alerts-insights-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <h3>Forecast Alerts</h3>
+                </div>
+                <div id="alertsList">
+                    <!-- Alerts will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <svg style="width: 20px; height: 20px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    <h3>Key Insights & Recommendations</h3>
+                </div>
+                <div class="insights-grid" id="insightsList">
+                    <!-- Insights will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Dashboard updated with latest forecast data • As of Date: <span id="footerDate">2024-12-10</span> • Auto-refresh enabled</p>
+        </div>
+    </div>
+</body>
+</html>
