@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Occupancy Forecasting Dashboard</title>
+    
+    <!-- External Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+    <!-- Navigation will be injected here -->
+    <div id="navigation"></div>
+    
+    <!-- Your existing dashboard content -->
+    <div class="dashboard-container">
+        <!-- Dashboard content here -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="../config/constants.js"></script>
+    <script src="../config/supabase.js"></script>
+    <script src="../assets/js/components/shared-components.js"></script>
+    <script src="../assets/js/utils/supabase-client.js"></script>
+    <script src="../assets/js/components/dashboard-components.js"></script>
+    
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inject navigation
+            document.getElementById('navigation').innerHTML = 
+                SharedComponents.createNavigation('dashboard');
+            
+            // Check configuration and initialize
+            if (checkSupabaseConfig()) {
+                initializeDashboard();
+            }
+        });
+        
+        function onConfigUpdate() {
+            initializeDashboard();
+        }
+        
+        async function initializeDashboard() {
+            // Your existing dashboard initialization code
+        }
+    </script>
+</body>
+</html>

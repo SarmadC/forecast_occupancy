@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Uploader - Occupancy Dashboard</title>
+    
+    <!-- External Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/uploader.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <div id="navigation"></div>
+    
+    <!-- Your existing uploader content -->
+    <div class="uploader-container">
+        <!-- Uploader content here -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="../config/constants.js"></script>
+    <script src="../config/supabase.js"></script>
+    <script src="../assets/js/components/shared-components.js"></script>
+    <script src="../assets/js/utils/supabase-client.js"></script>
+    <script src="../assets/js/utils/excel-processor.js"></script>
+    <script src="../assets/js/components/uploader-components.js"></script>
+    
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inject navigation
+            document.getElementById('navigation').innerHTML = 
+                SharedComponents.createNavigation('uploader');
+            
+            // Check configuration and initialize
+            if (checkSupabaseConfig()) {
+                initializeUploader();
+            }
+        });
+        
+        function onConfigUpdate() {
+            initializeUploader();
+        }
+        
+        async function initializeUploader() {
+            // Your existing uploader initialization code
+        }
+    </script>
+</body>
+</html>
