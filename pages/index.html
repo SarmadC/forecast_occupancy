@@ -3,52 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occupancy Forecasting Dashboard</title>
+    <title>Occupancy Forecast Dashboard</title>
     
-    <!-- External Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Styles -->
     <link rel="stylesheet" href="../assets/css/main.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css">
-</head>
-<body>
-    <!-- Navigation will be injected here -->
-    <div id="navigation"></div>
     
-    <!-- Your existing dashboard content -->
-    <div class="dashboard-container">
-        <!-- Dashboard content here -->
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="page-background">
 
-    <!-- Scripts -->
+    <header id="navigation"></header>
+
+    <main class="main-container" id="dashboard-main">
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Key metrics and forecast overview based on the latest report.</p>
+        </div>
+
+        <div id="metrics-container" class="metrics-grid">
+            </div>
+
+        <div class="chart-container-wrapper">
+            <h2 class="chart-title">Occupancy Forecast by Market Segment</h2>
+            <div id="forecast-chart-container" class="chart-container">
+                </div>
+        </div>
+    </main>
+
     <script src="../config/constants.js"></script>
     <script src="../config/supabase.js"></script>
     <script src="../assets/js/components/shared-components.js"></script>
-    <script src="../assets/js/utils/supabase-client.js"></script>
-    <script src="../assets/js/components/dashboard-components.js"></script>
     
-    <script>
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inject navigation
-            document.getElementById('navigation').innerHTML = 
-                SharedComponents.createNavigation('dashboard');
-            
-            // Check configuration and initialize
-            if (checkSupabaseConfig()) {
-                initializeDashboard();
-            }
-        });
-        
-        function onConfigUpdate() {
-            initializeDashboard();
-        }
-        
-        async function initializeDashboard() {
-            // Your existing dashboard initialization code
-        }
-    </script>
+    <script src="../script.js"></script>
+
 </body>
 </html>

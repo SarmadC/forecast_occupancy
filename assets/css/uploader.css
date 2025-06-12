@@ -1,0 +1,126 @@
+/**
+ * @file uploader.css
+ * @description Contains specific styles for the data uploader page, including
+ * the drop zone, file preview, and other related components. These styles
+ * build upon the design system defined in main.css.
+ */
+
+/* Drop Zone Styles */
+.drop-zone {
+    border: 3px dashed var(--primary-color);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+    text-align: center;
+    background: rgba(59, 130, 246, 0.05);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.drop-zone:hover {
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.drop-zone.drag-over {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--primary-dark);
+    transform: scale(1.02);
+}
+
+.drop-zone-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.drop-zone-icon {
+    font-size: 64px;
+    opacity: 0.7;
+    color: var(--primary-color);
+}
+
+.drop-zone-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.drop-zone-subtitle {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    margin: 0;
+}
+
+.drop-zone-hint {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-md);
+}
+
+
+/* Preview Container Styles */
+.preview-container {
+    margin-top: var(--spacing-xl);
+}
+
+/* Data Table Styles (reusing from main.css but can be extended here) */
+.data-table-container {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid #e5e7eb;
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table-header h3 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+}
+
+.table-wrapper {
+    max-height: 500px; /* Limit height and make it scrollable */
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table tbody tr:hover {
+    background: var(--bg-muted);
+}
