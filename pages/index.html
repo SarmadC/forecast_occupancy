@@ -3,37 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occupancy Forecast Dashboard</title>
+    <title>Advanced Occupancy Dashboard</title>
     
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../assets/css/main.css">
     
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="page-background">
 
+    <!-- The global navigation bar will be injected here -->
     <header id="navigation"></header>
 
+    <!-- Main container for page content -->
     <main class="main-container" id="dashboard-main">
         <div class="page-header">
-            <h1 class="page-title">Dashboard</h1>
-            <p class="page-subtitle">Key metrics and forecast overview based on the latest report.</p>
+            <h1 class="page-title">Advanced Forecast Analytics</h1>
+            <p class="page-subtitle">Compare reports, track booking pace, and analyze historical performance.</p>
         </div>
 
-        <div id="metrics-container" class="metrics-grid">
+        <!-- Filter Bar -->
+        <div id="filter-panel-container" class="filter-panel">
+            <!-- Filter UI will be dynamically injected here by script.js -->
+        </div>
+
+        <!-- KPI Metrics Container -->
+        <div id="kpi-container" class="metrics-grid">
+            <!-- Dynamic KPI cards will be rendered here by script.js -->
+        </div>
+        
+        <!-- Main Chart Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+            <!-- Forecast Comparison Chart -->
+            <div class="chart-container-wrapper col-span-1 lg:col-span-2">
+                <h2 class="chart-title">📈 Forecast Comparison</h2>
+                <div id="forecast-comparison-chart" class="chart-canvas"></div>
             </div>
 
-        <div class="chart-container-wrapper">
-            <h2 class="chart-title">Occupancy Forecast by Market Segment</h2>
-            <div id="forecast-chart-container" class="chart-container">
-                </div>
+            <!-- Weekly Pickup Chart -->
+            <div class="chart-container-wrapper">
+                <h2 class="chart-title">🚀 Weekly Pickup</h2>
+                <div id="weekly-pickup-chart" class="chart-canvas"></div>
+            </div>
+
+            <!-- STLY Variance Heatmap -->
+            <div class="chart-container-wrapper">
+                 <h2 class="chart-title">🗓️ STLY Variance Heatmap</h2>
+                <div id="stly-variance-heatmap" class="chart-canvas"></div>
+            </div>
         </div>
     </main>
 
+    <!-- App Configuration & Components -->
     <script src="../config/constants.js"></script>
     <script src="../config/supabase.js"></script>
     <script src="../assets/js/components/shared-components.js"></script>
+    <script src="../assets/js/dashboard-visuals.js"></script> <!-- Added new visuals script -->
     
+    <!-- Main Page Script -->
     <script src="../script.js"></script>
 
 </body>
