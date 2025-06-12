@@ -253,7 +253,8 @@ function calculateDaysOut(forecastDate, asOfDate) {
 // --- DATA UPLOAD ---
 
 /**
- * Handles the final upload of processed data to Supabase.
+ * Handles the final upload of processed data to Supabase,
+ * including a check for existing reports and an overwrite confirmation flow.
  */
 async function handleUpload() {
     if (processedData.length === 0) {
@@ -261,35 +262,79 @@ async function handleUpload() {
         return;
     }
 
-    showLoading('Uploading data to database...', 0);
-    
-    try {
-        for (let i = 0; i < processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
-            const batch = processedData.slice(i, i + AppConstants.DATABASE.BATCH_SIZE);
-            const { error } = await supabase.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
-            if (error) throw error;
-            
-            const progress = ((i + batch.length) / processedData.length) * 100;
-            updateLoadingProgress(progress, `Uploading... ${Math.round(progress)}%`);
-        }
-        
-        hideLoading();
-        showAlert(AppConstants.SUCCESS_MESSAGES.FILE_UPLOADED, 'success', 10000, [{
-            label: 'Go to Dashboard',
-            type: 'primary',
-            onClick: `location.href='${AppConstants.ROUTES.DASHBOARD}'`
-        }]);
+    showLoading('Preparing to upload...');
+    let uploadSucceeded = false;
 
-        document.getElementById('upload-actions').style.display = 'none';
-        document.getElementById('preview-container').style.display = 'none';
-        processedData = [];
+    try {
+        const reportId = processedData[0].report_id;
+
+        // Step 1: Check if the report already exists
+        const { data: existing, error: checkError } = await supabase
+            .from(AppConstants.DATABASE.TABLE_NAME)
+            .select('id')
+            .eq('report_id', reportId)
+            .limit(1);
+
+        if (checkError) throw new Error(`Failed to check for existing report: ${checkError.message}`);
+
+        let proceedWithUpload = true;
+        if (existing && existing.length > 0) {
+            // Step 2: Ask user for overwrite confirmation
+            const confirmed = await showModal(
+                'Overwrite Report?',
+                `A report named "<strong>${reportId}</strong>" already exists. Do you want to delete the old data and replace it with this new upload?`
+            );
+
+            if (confirmed) {
+                // Step 3: Delete the old data
+                showLoading('Deleting old report...');
+                const { error: deleteError } = await supabase
+                    .from(AppConstants.DATABASE.TABLE_NAME)
+                    .delete()
+                    .eq('report_id', reportId);
+
+                if (deleteError) throw new Error(`Failed to delete old report: ${deleteError.message}`);
+                showAlert('Old report deleted. Starting new upload.', 'info');
+            } else {
+                proceedWithUpload = false;
+            }
+        }
+
+        // Step 4: Proceed with upload if confirmed or not a duplicate
+        if (proceedWithUpload) {
+            showLoading('Uploading data to database...', 0);
+            for (let i = 0; i < processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
+                const batch = processedData.slice(i, i + AppConstants.DATABASE.BATCH_SIZE);
+                const { error } = await supabase.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
+                if (error) throw error;
+                
+                const progress = ((i + batch.length) / processedData.length) * 100;
+                updateLoadingProgress(progress, `Uploading... ${Math.round(progress)}%`);
+            }
+            uploadSucceeded = true; // Mark as successful
+            showAlert(AppConstants.SUCCESS_MESSAGES.FILE_UPLOADED, 'success', 10000, [{
+                label: 'Go to Dashboard',
+                type: 'primary',
+                onClick: `location.href='${AppConstants.ROUTES.DASHBOARD}'`
+            }]);
+        } else {
+            showAlert('Upload cancelled by user.', 'info');
+        }
 
     } catch (error) {
-        hideLoading();
         console.error('Upload failed:', error);
         showAlert(`Upload failed: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+        // Only reset the UI if the upload was fully successful
+        if (uploadSucceeded) {
+            document.getElementById('upload-actions').style.display = 'none';
+            document.getElementById('preview-container').style.display = 'none';
+            processedData = [];
+        }
     }
 }
+
 
 /**
  * Renders a data table preview using SharedComponents.

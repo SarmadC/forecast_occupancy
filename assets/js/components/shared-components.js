@@ -126,20 +126,20 @@ class SharedComponents {
                     <div class="modal-body">
                         <form id="configForm" class="form">
                              <div class="form-group">
-                                <label for="modalSupabaseUrl" class="form-label">Supabase Project URL</label>
-                                <input type="url" id="modalSupabaseUrl" required class="form-input"
-                                    placeholder="https://your-project.supabase.co"
-                                    value="${currentConfig.url || ''}">
+                                 <label for="modalSupabaseUrl" class="form-label">Supabase Project URL</label>
+                                 <input type="url" id="modalSupabaseUrl" required class="form-input"
+                                     placeholder="https://your-project.supabase.co"
+                                     value="${currentConfig.url || ''}">
                              </div>
                              <div class="form-group">
-                                <label for="modalSupabaseKey" class="form-label">Anon/Public Key</label>
-                                <input type="password" id="modalSupabaseKey" required class="form-input"
+                                 <label for="modalSupabaseKey" class="form-label">Anon/Public Key</label>
+                                 <input type="password" id="modalSupabaseKey" required class="form-input"
                                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                                      value="${currentConfig.key || ''}">
                              </div>
                              <div class="form-actions">
-                                <button type="button" onclick="testConfigConnection()" class="btn btn-secondary">Test Connection</button>
-                                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                                 <button type="button" onclick="testConfigConnection()" class="btn btn-secondary">Test Connection</button>
+                                 <button type="submit" class="btn btn-primary">Save Configuration</button>
                              </div>
                         </form>
                         <div id="connectionTestResult" style="margin-top: 1rem;"></div>
@@ -222,6 +222,68 @@ class SharedComponents {
 
 
 // --- GLOBAL HELPER FUNCTIONS ---
+
+/**
+ * Initializes the current page by rendering the navigation, checking for configuration,
+ * and verifying user permissions. This is the entry point for all page scripts.
+ * @param {string} pageName - A name for the page being initialized (e.g., 'dashboard', 'uploader').
+ * @returns {boolean} True if initialization can proceed, false otherwise.
+ */
+function initializePage(pageName) {
+    console.log(`Initializing ${pageName} page...`);
+
+    // Render the main navigation on every page.
+    const navContainer = document.getElementById('navigation');
+    if (navContainer) {
+        navContainer.innerHTML = SharedComponents.createNavigation(pageName);
+    }
+
+    // Check if Supabase is configured. If not, show a permanent alert and stop.
+    if (!window.SupabaseConfig.isConfigured()) {
+        showAlert('Database not configured. Please set up your connection.', 'warning', 0, [{
+            label: 'Configure Now',
+            type: 'primary',
+            onClick: 'showConfigModal()'
+        }]);
+        return false;
+    }
+
+    // If configured, proceed with checking permissions.
+    checkPagePermissions();
+    
+    return true;
+}
+
+/**
+ * Checks if the current user has the required role to view the current page.
+ * This is called automatically by initializePage.
+ */
+async function checkPagePermissions() {
+    const isUploadPage = window.location.pathname.includes('upload.html');
+    
+    // Only protect the upload page for now. Other pages are public.
+    if (isUploadPage) {
+        const role = await getUserRole(); // Uses the function from supabase.js
+        const authorizedRoles = ['admin', 'uploader'];
+
+        if (!authorizedRoles.includes(role)) {
+            // Block the main content and show an access denied message.
+            const mainContent = document.querySelector('main');
+            if (mainContent) {
+                mainContent.innerHTML = SharedComponents.createEmptyState({
+                    icon: '🚫',
+                    title: 'Access Denied',
+                    message: 'You do not have permission to view this page. Redirecting to the dashboard...',
+                });
+            }
+            
+            // Redirect after a short delay so the user can read the message.
+            setTimeout(() => {
+                window.location.href = AppConstants.ROUTES.DASHBOARD; 
+            }, 3000);
+        }
+    }
+}
 
 function showLoading(message = 'Loading...', progress = null) {
     hideLoading();
@@ -328,20 +390,4 @@ async function testConfigConnection() {
     }
 }
 
-function initializePage(pageName) {
-    const navContainer = document.getElementById('navigation');
-    if (navContainer) {
-        navContainer.innerHTML = SharedComponents.createNavigation(pageName);
-    }
-    if(!window.SupabaseConfig.isConfigured()){
-         showAlert('Database not configured. Please set up your connection.', 'warning', 0, [{
-            label: 'Configure Now',
-            type: 'primary',
-            onClick: 'showConfigModal()'
-        }]);
-        return false;
-    }
-    return true;
-}
-
-console.log('✅ Shared components (v3) loaded.');
+console.log('✅ Shared components (v4) loaded.');

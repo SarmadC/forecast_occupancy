@@ -120,3 +120,49 @@ window.SupabaseConfig = (() => {
 const supabase = window.SupabaseConfig.getClient();
 
 console.log('✅ Supabase configuration manager loaded.');
+
+
+// --- NEW UTILITY FUNCTION FOR ROLE-BASED ACCESS ---
+
+/**
+ * Fetches the role of the currently authenticated user from the 'profiles' table.
+ * @returns {Promise<string|null>} The user's role (e.g., 'admin', 'viewer') or null if not found/error.
+ */
+async function getUserRole() {
+    // Ensure we have a client to work with.
+    if (!supabase) {
+        console.error("Supabase client not available for getUserRole.");
+        return null;
+    }
+
+    // First, get the current user from the auth session.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        // No user is logged in.
+        return null;
+    }
+
+    // Then, query the 'profiles' table for that user's role.
+    try {
+        const { data, error, status } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single(); // .single() is efficient and expects one row.
+
+        if (error && status !== 406) {
+            // 406 status code means no row was found, which is not a server error.
+            throw error;
+        }
+
+        if (data) {
+            return data.role;
+        }
+    } catch (error) {
+        console.error('Error fetching user role:', error.message);
+        return null;
+    }
+
+    // Return null if no profile was found for the user.
+    return null;
+}
