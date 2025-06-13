@@ -126,6 +126,7 @@ body {
 .filter-panel {
     display: flex;
     gap: var(--spacing-md);
+    align-items: center; /* Ensures button and dropdowns are aligned */
 }
 .filter-panel .form-select {
     padding: var(--spacing-sm) var(--spacing-md);

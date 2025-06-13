@@ -131,6 +131,7 @@ function renderDashboard() {
  */
 function renderFilterPanel(distinctCities = [], distinctDates = []) {
     const container = document.getElementById('filter-panel-container');
+    const uploaderRoute = window.AppConstants?.ROUTES?.UPLOADER || 'upload.html';
 
     const filtersHtml = `
         <select id="filter_city" class="form-select" onchange="handleFilterChange()">
@@ -147,6 +148,10 @@ function renderFilterPanel(distinctCities = [], distinctDates = []) {
         <select class="form-select" disabled>
             <option>Date Range</option>
         </select>
+
+        <button onclick="location.href='${uploaderRoute}'" class="btn btn-primary">
+            📁 Upload File
+        </button>
     `;
     container.innerHTML = filtersHtml;
 }
