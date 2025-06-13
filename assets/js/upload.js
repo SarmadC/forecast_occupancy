@@ -8,7 +8,23 @@
 let processedData = []; // Holds the validated data from the Excel file.
 
 // --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // **NEW**: Check for a user session before doing anything else.
+    const supabaseClient = window.SupabaseConfig.getClient();
+    let session = null;
+
+    if (supabaseClient) {
+        const { data } = await supabaseClient.auth.getSession();
+        session = data.session;
+    }
+
+    if (!session) {
+        // If no user is logged in, redirect to the login page.
+        window.location.replace(window.AppConstants?.ROUTES?.LOGIN || 'login.html');
+        return; // Stop further script execution
+    }
+
+    // If a session exists, proceed with initializing the uploader page.
     const isConfigured = initializePage('uploader');
     if (!isConfigured) {
         console.warn("Uploader initialization halted: Supabase not configured.");
@@ -261,6 +277,12 @@ async function handleUpload() {
         showAlert('No data to upload.', 'error');
         return;
     }
+    
+    const supabaseClient = window.SupabaseConfig.getClient();
+    if (!supabaseClient) {
+        showAlert("Cannot connect to the database. Please configure the connection first.", "error");
+        return;
+    }
 
     showLoading('Preparing to upload...');
     let uploadSucceeded = false;
@@ -269,7 +291,7 @@ async function handleUpload() {
         const reportId = processedData[0].report_id;
 
         // Step 1: Check if the report already exists
-        const { data: existing, error: checkError } = await supabase
+        const { data: existing, error: checkError } = await supabaseClient
             .from(AppConstants.DATABASE.TABLE_NAME)
             .select('id')
             .eq('report_id', reportId)
@@ -288,7 +310,7 @@ async function handleUpload() {
             if (confirmed) {
                 // Step 3: Delete the old data
                 showLoading('Deleting old report...');
-                const { error: deleteError } = await supabase
+                const { error: deleteError } = await supabaseClient
                     .from(AppConstants.DATABASE.TABLE_NAME)
                     .delete()
                     .eq('report_id', reportId);
@@ -305,7 +327,7 @@ async function handleUpload() {
             showLoading('Uploading data to database...', 0);
             for (let i = 0; i < processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
                 const batch = processedData.slice(i, i + AppConstants.DATABASE.BATCH_SIZE);
-                const { error } = await supabase.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
+                const { error } = await supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
                 if (error) throw error;
                 
                 const progress = ((i + batch.length) / processedData.length) * 100;

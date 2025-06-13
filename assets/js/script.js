@@ -10,7 +10,23 @@ let primaryReportData = []; // Data for the selected primary report
 let secondaryReportData = []; // Data for the selected secondary report
 
 // --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // **NEW**: Check for a user session before doing anything else.
+    const supabaseClient = window.SupabaseConfig.getClient();
+    let session = null;
+
+    if (supabaseClient) {
+        const { data } = await supabaseClient.auth.getSession();
+        session = data.session;
+    }
+
+    if (!session) {
+        // If no user is logged in, redirect to the login page.
+        window.location.replace(window.AppConstants?.ROUTES?.LOGIN || 'login.html');
+        return; // Stop further script execution
+    }
+
+    // If a session exists, proceed with initializing the dashboard.
     const isConfigured = initializePage('dashboard');
     if (isConfigured) {
         loadInitialData();
@@ -32,7 +48,7 @@ async function loadInitialData() {
         const { data, error } = await supabaseClient.rpc('get_distinct_reports');
         if (error) throw error;
         
-        // **FIXED**: Safely handle null responses from the RPC call.
+        // Safely handle null responses from the RPC call.
         reportFilters = data || { cities: [], dates: [] };
         const cities = reportFilters.cities || [];
         const dates = reportFilters.dates || [];
