@@ -1,15 +1,15 @@
 /**
  * @file upload.js
  * @description Handles all logic for the data uploader page, including file
- * selection, drag-and-drop, detailed Excel parsing, data validation, and uploading to Supabase.
+ * selection, drag-and-drop, CSV parsing, data validation, and uploading to Supabase.
  */
 
 // --- STATE MANAGEMENT ---
-let processedData = []; // Holds the validated data from the Excel file.
+let processedData = []; // Holds the validated data from the file.
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // **NEW**: Check for a user session before doing anything else.
+    // Check for a user session before doing anything else.
     const supabaseClient = window.SupabaseConfig.getClient();
     let session = null;
 
@@ -47,11 +47,11 @@ function renderUploaderUI() {
         <div id="drop-zone" class="drop-zone">
             <div class="drop-zone-prompt">
                 <span class="drop-zone-icon">📁</span>
-                <p class="drop-zone-title">Drag & drop your Excel file here</p>
+                <p class="drop-zone-title">Drag & drop your CSV file here</p>
                 <p class="drop-zone-subtitle">or click to select a file</p>
                 <label for="file-input" class="btn btn-primary">Browse Files</label>
-                <input type="file" id="file-input" class="sr-only" accept=".xlsx, .xls">
-                <p class="drop-zone-hint">Max file size: 50MB. Supported formats: .xlsx, .xls</p>
+                <input type="file" id="file-input" class="sr-only" accept=".csv">
+                <p class="drop-zone-hint">Max file size: 50MB. Supported format: .csv</p>
             </div>
         </div>
         <div id="upload-actions" class="form-actions" style="display: none; justify-content: center; margin-top: var(--spacing-lg);">
@@ -88,8 +88,8 @@ async function handleFile(file) {
 
     try {
         validateFile(file);
-        showLoading('Processing Excel file...');
-        const transformedData = await processAmadeusFile(file);
+        showLoading('Processing file...');
+        const transformedData = await processCsvFile(file);
         
         processedData = transformedData; // Store valid data
         renderPreviewTable(transformedData.slice(0, 100)); // Show a preview of the first 100 rows
@@ -105,11 +105,11 @@ async function handleFile(file) {
 }
 
 /**
- * Reads and transforms a single Amadeus Excel file.
+ * Reads and transforms a CSV file.
  * @param {File} file The file to process.
  * @returns {Promise<Array<object>>} A promise that resolves with the transformed data.
  */
-function processAmadeusFile(file) {
+function processCsvFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -119,7 +119,7 @@ function processAmadeusFile(file) {
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null, raw: false });
 
-                const transformedData = transformAmadeusData(rawData, file.name);
+                const transformedData = transformCsvData(rawData);
                 validateTransformedData(transformedData);
                 resolve(transformedData);
             } catch (error) {
@@ -131,95 +131,51 @@ function processAmadeusFile(file) {
     });
 }
 
-
-// --- DATA TRANSFORMATION & VALIDATION (Logic from ExcelProcessor) ---
+// --- DATA TRANSFORMATION & VALIDATION ---
 
 /**
- * Transforms raw 2D array data from Excel into structured JSON.
+ * Transforms data from a simple, normalized CSV format.
  * @param {Array<Array<any>>} rawData The raw data from the worksheet.
- * @param {string} fileName The name of the original file.
  * @returns {Array<object>} The array of structured forecast records.
  */
-function transformAmadeusData(rawData, fileName) {
-    const metadata = extractMetadata(rawData, fileName);
-    const dataStartRow = findDataStartRow(rawData);
-    if (dataStartRow === -1) throw new Error('Could not find the data header row in the Excel file.');
-    
-    const transformed = [];
-    const segmentMappings = [
-        { name: 'Totals', cols: [3, 4, 5] }, { name: 'Transient', cols: [6, 7, 8] },
-        { name: 'Group_Sold', cols: [9, 10, 11] }, { name: 'Unsold_Block', cols: [12, 13, 14] },
-        { name: 'Other', cols: [15, 16, 17] }
-    ];
+function transformCsvData(rawData) {
+    const header = rawData[0].map(h => String(h || '').trim().toLowerCase());
+    const dataRows = rawData.slice(1);
 
-    for (let i = dataStartRow; i < rawData.length; i++) {
-        const row = rawData[i];
-        if (!row || !row[2]) continue;
-
-        const forecastDate = parseDate(row[2]);
-        if (!forecastDate) continue;
-
-        const daysOut = calculateDaysOut(forecastDate, metadata.asOfDate);
-
-        for (const segment of segmentMappings) {
-            transformed.push({
-                as_of_date: metadata.asOfDate,
-                report_id: metadata.reportId,
-                city: metadata.city,
-                forecast_date: forecastDate,
-                market_segment: segment.name,
-                current_occupancy: parseNumber(row[segment.cols[0]]) * 100,
-                weekly_pickup: parseNumber(row[segment.cols[1]]),
-                stly_variance: parseNumber(row[segment.cols[2]]),
-                days_out: daysOut,
-                forecast_horizon: getHorizonFromDaysOut(daysOut)
-            });
-        }
-    }
-    return transformed;
-}
-
-function extractMetadata(rawData, fileName) {
-    const metadata = {
-        fileName: fileName,
-        reportId: fileName.replace(/\.(xlsx|xls)$/, ''),
-        asOfDate: null,
-        city: null,
+    const colIndices = {
+        asOfDate: header.findIndex(h => h === 'as_of_date'),
+        reportId: header.findIndex(h => h === 'report_id'),
+        city: header.findIndex(h => h === 'city'),
+        forecastDate: header.findIndex(h => h === 'forecast_date'),
+        marketSegment: header.findIndex(h => h === 'market_segment'),
+        currentOccupancy: header.findIndex(h => h === 'current_occupancy'),
+        stlyVariance: header.findIndex(h => h === 'stly_variance'),
+        weeklyPickup: header.findIndex(h => h === 'weekly_pickup'),
+        daysOut: header.findIndex(h => h === 'days_out'),
+        forecastHorizon: header.findIndex(h => h === 'forecast_horizon')
     };
-    
-    const nameParts = fileName.replace(/\.(xlsx|xls)$/, '').split('_');
-    if (nameParts.length >= 4) {
-        metadata.city = nameParts[0];
-        metadata.asOfDate = `${nameParts[1]}-${nameParts[2].padStart(2, '0')}-${nameParts[3].padStart(2, '0')}`;
-    }
 
-    if (!metadata.asOfDate || !metadata.city) {
-         for (let i = 0; i < Math.min(20, rawData.length); i++) {
-            const row = rawData[i];
-            if (!row || row.length < 3) continue;
-            const label = String(row[1] || '').trim().toLowerCase();
-            const value = row[2];
-            if (label.includes('as of date') && value && !metadata.asOfDate) metadata.asOfDate = parseDate(value);
-            if (label.includes('comp set') && value && !metadata.city) metadata.city = String(value).trim();
+    const required = ['as_of_date', 'forecast_date', 'market_segment', 'current_occupancy'];
+    for(const col of required) {
+        if (colIndices[col.replace(/_([a-z])/g, g => g[1].toUpperCase())] === -1) {
+             throw new Error(`Invalid CSV format. Missing required column: '${col}'.`);
         }
     }
-    
-    if (!metadata.asOfDate) throw new Error('Could not determine "As of Date".');
-    if (!metadata.city) throw new Error('Could not determine City.');
-    
-    return metadata;
+
+    return dataRows.map(row => ({
+        as_of_date: parseDate(row[colIndices.asOfDate]),
+        report_id: row[colIndices.reportId],
+        city: row[colIndices.city],
+        forecast_date: parseDate(row[colIndices.forecastDate]),
+        market_segment: row[colIndices.marketSegment],
+        current_occupancy: parseNumber(row[colIndices.currentOccupancy]),
+        stly_variance: parseNumber(row[colIndices.stlyVariance]),
+        weekly_pickup: parseNumber(row[colIndices.weeklyPickup]),
+        days_out: parseNumber(row[colIndices.daysOut]),
+        forecast_horizon: row[colIndices.forecastHorizon],
+    })).filter(row => row.as_of_date && row.forecast_date); // Filter out any empty rows
 }
 
-function findDataStartRow(rawData) {
-    for (let i = 0; i < rawData.length; i++) {
-        const row = rawData[i] || [];
-        const hasCurrent = String(row[3] || '').toLowerCase().includes('current');
-        const hasPickup = String(row[4] || '').toLowerCase().includes('pickup');
-        const hasVariance = String(row[5] || '').toLowerCase().includes('var');
-        if (hasCurrent && hasPickup && hasVariance) return i + 1;
-    }
-    return -1;
-}
 
 function validateTransformedData(data) {
     if (!data || data.length === 0) throw new Error('No data was extracted from the file.');
@@ -232,7 +188,7 @@ function validateTransformedData(data) {
 function validateFile(file) {
     if (file.size > AppConstants.DATABASE.MAX_FILE_SIZE) throw new Error(AppConstants.ERROR_MESSAGES.FILE_TOO_LARGE);
     const extension = '.' + file.name.split('.').pop().toLowerCase();
-    if (!['.xlsx', '.xls'].includes(extension)) throw new Error(AppConstants.ERROR_MESSAGES.INVALID_FILE_FORMAT);
+    if (!['.csv'].includes(extension)) throw new Error("Invalid file format. Please upload .csv files only.");
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -259,18 +215,10 @@ function parseNumber(value) {
     return 0;
 }
 
-function calculateDaysOut(forecastDate, asOfDate) {
-    const forecast = new Date(forecastDate);
-    const asOf = new Date(asOfDate);
-    return Math.round((forecast.getTime() - asOf.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-
 // --- DATA UPLOAD ---
 
 /**
- * Handles the final upload of processed data to Supabase,
- * including a check for existing reports and an overwrite confirmation flow.
+ * Handles the final upload of processed data to Supabase.
  */
 async function handleUpload() {
     if (processedData.length === 0) {
@@ -289,40 +237,38 @@ async function handleUpload() {
 
     try {
         const reportId = processedData[0].report_id;
-
-        // Step 1: Check if the report already exists
-        const { data: existing, error: checkError } = await supabaseClient
-            .from(AppConstants.DATABASE.TABLE_NAME)
-            .select('id')
-            .eq('report_id', reportId)
-            .limit(1);
-
-        if (checkError) throw new Error(`Failed to check for existing report: ${checkError.message}`);
-
         let proceedWithUpload = true;
-        if (existing && existing.length > 0) {
-            // Step 2: Ask user for overwrite confirmation
-            const confirmed = await showModal(
-                'Overwrite Report?',
-                `A report named "<strong>${reportId}</strong>" already exists. Do you want to delete the old data and replace it with this new upload?`
-            );
 
-            if (confirmed) {
-                // Step 3: Delete the old data
-                showLoading('Deleting old report...');
-                const { error: deleteError } = await supabaseClient
-                    .from(AppConstants.DATABASE.TABLE_NAME)
-                    .delete()
-                    .eq('report_id', reportId);
+        if (reportId) {
+            const { data: existing, error: checkError } = await supabaseClient
+                .from(AppConstants.DATABASE.TABLE_NAME)
+                .select('id')
+                .eq('report_id', reportId)
+                .limit(1);
 
-                if (deleteError) throw new Error(`Failed to delete old report: ${deleteError.message}`);
-                showAlert('Old report deleted. Starting new upload.', 'info');
-            } else {
-                proceedWithUpload = false;
+            if (checkError) throw new Error(`Failed to check for existing report: ${checkError.message}`);
+
+            if (existing && existing.length > 0) {
+                const confirmed = await showModal(
+                    'Overwrite Report?',
+                    `A report named "<strong>${reportId}</strong>" already exists. Do you want to delete the old data and replace it with this new upload?`
+                );
+
+                if (confirmed) {
+                    showLoading('Deleting old report...');
+                    const { error: deleteError } = await supabaseClient
+                        .from(AppConstants.DATABASE.TABLE_NAME)
+                        .delete()
+                        .eq('report_id', reportId);
+
+                    if (deleteError) throw new Error(`Failed to delete old report: ${deleteError.message}`);
+                    showAlert('Old report deleted. Starting new upload.', 'info');
+                } else {
+                    proceedWithUpload = false;
+                }
             }
         }
-
-        // Step 4: Proceed with upload if confirmed or not a duplicate
+        
         if (proceedWithUpload) {
             showLoading('Uploading data to database...', 0);
             for (let i = 0; i < processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
@@ -333,7 +279,7 @@ async function handleUpload() {
                 const progress = ((i + batch.length) / processedData.length) * 100;
                 updateLoadingProgress(progress, `Uploading... ${Math.round(progress)}%`);
             }
-            uploadSucceeded = true; // Mark as successful
+            uploadSucceeded = true;
             showAlert(AppConstants.SUCCESS_MESSAGES.FILE_UPLOADED, 'success', 10000, [{
                 label: 'Go to Dashboard',
                 type: 'primary',
@@ -348,10 +294,13 @@ async function handleUpload() {
         showAlert(`Upload failed: ${error.message}`, 'error');
     } finally {
         hideLoading();
-        // Only reset the UI if the upload was fully successful
         if (uploadSucceeded) {
             document.getElementById('upload-actions').style.display = 'none';
-            document.getElementById('preview-container').style.display = 'none';
+            const previewContainer = document.getElementById('preview-container');
+            if(previewContainer) {
+                previewContainer.innerHTML = '';
+                previewContainer.style.display = 'none';
+            }
             processedData = [];
         }
     }
@@ -363,13 +312,18 @@ async function handleUpload() {
  * @param {Array<object>} data - The data to render in the table.
  */
 function renderPreviewTable(data) {
-    const container = document.getElementById('preview-container');
+    let container = document.getElementById('preview-container');
+    if (!container) {
+        const main = document.querySelector('.main-container');
+        container = document.createElement('div');
+        container.id = 'preview-container';
+        main.appendChild(container);
+    }
     container.style.display = 'block';
 
     const columns = Object.keys(data[0]).map(key => ({
         key: key,
         label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        type: key.includes('date') ? 'date' : 'text'
     }));
 
     container.innerHTML = SharedComponents.createDataTable({
