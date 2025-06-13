@@ -4,6 +4,60 @@
  * Handles data fetching based on filters and calls visualization components to render the UI.
  */
 
+// --- HELPER FUNCTIONS ---
+
+/**
+ * Formats a date string into a more readable format.
+ * @param {string} dateString - The date string to format (e.g., '2023-04-01').
+ * @param {string} [format='default'] - The desired format ('default', 'long', 'short', 'iso').
+ * @returns {string} The formatted date.
+ */
+function formatDate(dateString, format = 'default') {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        // Adjust for timezone offset to prevent date changes
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+        const options = {
+            long: { year: 'numeric', month: 'long', day: 'numeric' },
+            short: { month: 'short', day: 'numeric' },
+            default: { year: 'numeric', month: 'short', day: 'numeric' }
+        };
+        if (format === 'iso') return adjustedDate.toISOString();
+        return adjustedDate.toLocaleDateString('en-US', options[format] || options.default);
+    } catch (e) {
+        return dateString; // Return original string if formatting fails
+    }
+}
+
+/**
+ * Formats a number as a percentage.
+ * @param {number} value - The number to format.
+ * @param {number} [decimals=2] - The number of decimal places.
+ * @returns {string} The formatted percentage string.
+ */
+function formatPercentage(value, decimals = 2) {
+    if (typeof value !== 'number') return 'N/A';
+    return `${value.toFixed(decimals)}%`;
+}
+
+/**
+ * Formats a number with commas and optional decimal places.
+ * @param {number} value - The number to format.
+ * @param {number} [decimals=0] - The number of decimal places.
+ * @returns {string} The formatted number string.
+ */
+function formatNumber(value, decimals = 0) {
+    if (typeof value !== 'number') return 'N/A';
+    return value.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+}
+
+
 // --- GLOBAL STATE ---
 let reportFilters = { dates: [], cities: [] }; // Holds the available filter options.
 let primaryReportData = []; // Data for the selected primary report

@@ -148,13 +148,14 @@ class SharedComponents {
             </div>
         `;
     }
-     /**
+
+    /**
      * Creates a metric card component.
      * @param {object} config - The configuration for the metric card.
      * @returns {string} The HTML for the metric card.
      */
     static createMetricCard(config) {
-        const { title, value, icon, color = 'blue' } = config;
+        const { title, value, icon, trend, color = 'blue' } = config;
         return `
             <div class="metric-card metric-card-${color}">
                 <div class="metric-header">
@@ -164,6 +165,7 @@ class SharedComponents {
                     </div>
                     <div class="metric-icon">${icon}</div>
                 </div>
+                ${trend ? `<div class="metric-trend">${trend}</div>` : ''}
             </div>
         `;
     }
