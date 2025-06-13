@@ -21,11 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
  * Loads the initial data needed for the dashboard filters.
  */
 async function loadInitialData() {
+    const supabaseClient = window.SupabaseConfig.getClient();
+    if (!supabaseClient) {
+        handleError("Failed to load initial data", new Error("Supabase client is not available."));
+        return;
+    }
+    
     showLoading('Fetching available reports...');
     try {
         // This assumes a 'get_distinct_reports' RPC function exists in Supabase
         // that returns a JSON object with 'cities' and 'dates' arrays.
-        const { data, error } = await supabase.rpc('get_distinct_reports');
+        const { data, error } = await supabaseClient.rpc('get_distinct_reports');
         if (error) throw error;
         
         reportFilters = data; // The response is now { cities: [...], dates: [...] }
@@ -33,7 +39,6 @@ async function loadInitialData() {
         
         if (reportFilters.dates && reportFilters.dates.length > 0) {
             // Automatically select and load the latest report.
-            // Assumes the first city in the alphabetical list is a reasonable default.
             const latestDate = reportFilters.dates[0]; // Dates are sorted descending in the SQL function.
             const city = reportFilters.cities[0];
             
@@ -56,6 +61,12 @@ async function loadInitialData() {
  * Also synchronizes the filter states to prevent comparing a report to itself.
  */
 async function handleFilterChange() {
+    const supabaseClient = window.SupabaseConfig.getClient();
+    if (!supabaseClient) {
+        handleError("Failed to load initial data", new Error("Supabase client is not available."));
+        return;
+    }
+
     const citySelect = document.getElementById('filter_city');
     const primaryDateSelect = document.getElementById('filter_primary_as_of_date');
     const secondaryDateSelect = document.getElementById('filter_secondary_as_of_date');
@@ -86,9 +97,9 @@ async function handleFilterChange() {
     showLoading('Fetching report data...');
     try {
         const [primaryRes, secondaryRes] = await Promise.all([
-            supabase.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', primaryDate),
+            supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', primaryDate),
             (secondaryDateSelect.value && secondaryDateSelect.value !== 'none')
-                ? supabase.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', secondaryDateSelect.value)
+                ? supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', secondaryDateSelect.value)
                 : Promise.resolve({ data: [], error: null })
         ]);
 
@@ -166,7 +177,7 @@ function renderEmptyState(isError = false) {
 
     const config = isError 
         ? { icon: '❌', title: 'Failed to Load Data', message: 'An error occurred while fetching data. Please try again or check the configuration.' }
-        : { icon: '📂', title: 'No Data Found', message: 'Upload a file to get started.', actions: [{ label: 'Upload Now', onClick: `location.href='${AppConstants.ROUTES.UPLOADER}'` }] };
+        : { icon: '📂', title: 'No Data Found', message: 'Upload a file to get started.', actions: [{ label: 'Upload Now', onClick: `location.href='${window.AppConstants?.ROUTES?.UPLOADER || 'upload.html'}'` }] };
 
     mainContainer.innerHTML = SharedComponents.createEmptyState(config);
 }

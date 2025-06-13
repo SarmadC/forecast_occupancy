@@ -10,8 +10,15 @@ let isLoginMode = true;
  * Main initialization function for the authentication page.
  */
 async function initializeAuthPage() {
+    const supabaseClient = window.SupabaseConfig.getClient();
+    // If the client isn't configured, we can't check for a session, so just render the form.
+    if (!supabaseClient) {
+        renderAuthForm();
+        return;
+    }
+
     // First, check if the user is already logged in.
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     
     if (session) {
         // If a session exists, the user is logged in. Redirect to the dashboard.
@@ -103,6 +110,12 @@ function toggleAuthMode() {
  */
 async function handleAuthSubmit(e) {
     e.preventDefault();
+    const supabaseClient = window.SupabaseConfig.getClient();
+    if (!supabaseClient) {
+        showAlert("Cannot connect to the database. Please configure the connection first.", "error");
+        return;
+    }
+
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
@@ -111,9 +124,9 @@ async function handleAuthSubmit(e) {
     try {
         let response;
         if (isLoginMode) {
-            response = await supabase.auth.signInWithPassword({ email, password });
+            response = await supabaseClient.auth.signInWithPassword({ email, password });
         } else {
-            response = await supabase.auth.signUp({ email, password });
+            response = await supabaseClient.auth.signUp({ email, password });
             if (!response.error) {
                 showAlert('Account created! Please check your email to verify.', 'success', 10000);
             }
