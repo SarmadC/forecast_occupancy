@@ -22,7 +22,7 @@ window.SupabaseConfig = (() => {
         if (supabaseUrl && supabaseKey) {
             try {
                 // Use the global supabase object from the Supabase CDN script.
-                supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey, {
                     auth: {
                         autoRefreshToken: true,
                         persistSession: true,
@@ -116,8 +116,8 @@ window.SupabaseConfig = (() => {
     return publicApi;
 })();
 
-// Create a global `supabase` variable for easier access elsewhere in the app.
-const supabase = window.SupabaseConfig.getClient();
+// **REMOVED**: The conflicting variable declaration has been removed.
+// const supabase = window.SupabaseConfig.getClient(); 
 
 console.log('✅ Supabase configuration manager loaded.');
 
@@ -129,14 +129,15 @@ console.log('✅ Supabase configuration manager loaded.');
  * @returns {Promise<string|null>} The user's role (e.g., 'admin', 'viewer') or null if not found/error.
  */
 async function getUserRole() {
-    // Ensure we have a client to work with.
-    if (!supabase) {
+    // **FIXED**: Get the client instance safely.
+    const supabaseClient = window.SupabaseConfig.getClient();
+    if (!supabaseClient) {
         console.error("Supabase client not available for getUserRole.");
         return null;
     }
 
     // First, get the current user from the auth session.
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
         // No user is logged in.
         return null;
@@ -144,7 +145,7 @@ async function getUserRole() {
 
     // Then, query the 'profiles' table for that user's role.
     try {
-        const { data, error, status } = await supabase
+        const { data, error, status } = await supabaseClient
             .from('profiles')
             .select('role')
             .eq('id', user.id)
