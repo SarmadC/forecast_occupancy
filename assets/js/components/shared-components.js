@@ -148,25 +148,25 @@ class SharedComponents {
             </div>
         `;
     }
-    
-    /**
-     * Creates a metric card component based on the new design.
+     /**
+     * Creates a metric card component.
      * @param {object} config - The configuration for the metric card.
      * @returns {string} The HTML for the metric card.
      */
     static createMetricCard(config) {
-        const { title, value, icon, trend, color = 'blue' } = config;
-        const trendClass = trend ? (trend.startsWith('+') ? 'positive' : 'negative') : '';
+        const { title, value, icon, color = 'blue' } = config;
         return `
-            <div class="metric-card">
-                <div class="metric-icon-wrapper bg-${color}">${icon}</div>
-                <h3 class="metric-title">${title}</h3>
-                <div class="metric-value">${value}</div>
-                ${trend ? `<div class="metric-trend ${trendClass}">${trend}</div>` : ''}
+            <div class="metric-card metric-card-${color}">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3 class="metric-title">${title}</h3>
+                        <div class="metric-value">${value}</div>
+                    </div>
+                    <div class="metric-icon">${icon}</div>
+                </div>
             </div>
         `;
     }
-
 
     /**
      * Creates an empty state component.
@@ -379,7 +379,8 @@ async function testConfigConnection() {
 
     resultDiv.textContent = 'Testing...';
     try {
-        const tempClient = supabase.createClient(url, key);
+        // **FIXED**: Explicitly use window.supabase to refer to the CDN library
+        const tempClient = window.supabase.createClient(url, key);
         const { error } = await tempClient.from(AppConstants.DATABASE.TABLE_NAME).select('id').limit(1);
         if (error && error.code !== '42P01') throw error;
         resultDiv.textContent = '✅ Connection successful!';
