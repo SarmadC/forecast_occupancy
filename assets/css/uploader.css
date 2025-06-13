@@ -7,11 +7,11 @@
 
 /* Drop Zone Styles */
 .drop-zone {
-    border: 3px dashed var(--primary-color);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-2xl);
+    border: 2px dashed var(--gray-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
     text-align: center;
-    background: rgba(59, 130, 246, 0.05);
+    background-color: var(--bg-secondary);
     transition: all var(--transition-base);
     cursor: pointer;
     position: relative;
@@ -19,15 +19,15 @@
 }
 
 .drop-zone:hover {
-    background: rgba(59, 130, 246, 0.1);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+    background-color: var(--bg-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .drop-zone.drag-over {
-    background: rgba(59, 130, 246, 0.15);
     border-color: var(--primary-dark);
-    transform: scale(1.02);
+    background-color: var(--bg-muted);
+    transform: scale(1.01);
 }
 
 .drop-zone-prompt {
@@ -35,7 +35,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
 }
 
 .drop-zone-icon {
@@ -72,9 +72,9 @@
 /* Data Table Styles (reusing from main.css but can be extended here) */
 .data-table-container {
     background: var(--bg-primary);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-md);
     border: 1px solid #e5e7eb;
 }
 
@@ -90,11 +90,11 @@
 .table-header h3 {
     margin: 0;
     font-size: var(--font-size-xl);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .table-wrapper {
-    max-height: 500px; /* Limit height and make it scrollable */
+    max-height: 600px; /* Limit height and make it scrollable */
     overflow-x: auto;
     overflow-y: auto;
 }
@@ -110,15 +110,18 @@
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
     white-space: nowrap;
+    font-size: var(--font-size-sm);
 }
 
 .data-table th {
     background: var(--bg-secondary);
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     position: sticky;
     top: 0;
     z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .data-table tbody tr:hover {

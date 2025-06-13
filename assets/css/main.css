@@ -3,70 +3,67 @@
  * Shared styles and design system for the entire application
  */
 
-/* CSS Variables for Design System */
+/* Modern & Elegant Design System */
 :root {
-    /* Colors */
-    --primary-color: #3b82f6;
-    --primary-dark: #1e40af;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --error-color: #ef4444;
-    --purple-color: #8b5cf6;
-    --gray-color: #6b7280;
-    
-    /* Text Colors */
-    --text-primary: #1a202c;
-    --text-secondary: #64748b;
+    /* New Color Palette */
+    --primary-color: #4f46e5; /* Indigo */
+    --primary-dark: #3730a3;
+    --success-color: #10b981; /* Emerald */
+    --warning-color: #f59e0b; /* Amber */
+    --error-color: #ef4444;   /* Red */
+    --purple-color: #8b5cf6; /* Violet */
+    --gray-color: #6b7280;   /* Gray */
+
+    /* Refined Text Colors */
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
     --text-muted: #9ca3af;
-    --text-light: #f8fafc;
-    
-    /* Background Colors */
+    --text-light: #ffffff;
+
+    /* Cleaner Backgrounds */
     --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-muted: #f1f5f9;
-    --bg-overlay: rgba(0, 0, 0, 0.5);
-    /* New background for the dashboard page */
-    --dashboard-bg: #f8f7f4; 
-    
-    /* Gradients */
-    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-    --card-gradient: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%);
-    --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    
-    /* Spacing */
+    --bg-secondary: #f9fafb;
+    --bg-muted: #f3f4f6;
+    --bg-overlay: rgba(17, 24, 39, 0.5);
+    --dashboard-bg: #f9fafb;
+
+    /* Subtle Gradients */
+    --primary-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    --success-gradient: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+
+    /* Generous Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
-    --spacing-xl: 32px;
-    --spacing-2xl: 48px;
-    
-    /* Border Radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
-    
-    /* Typography */
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --spacing-xl: 40px;
+    --spacing-2xl: 64px;
+
+    /* Softer Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+
+    /* Refined Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* Elegant Typography */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-size-xs: 12px;
     --font-size-sm: 14px;
     --font-size-base: 16px;
     --font-size-lg: 18px;
     --font-size-xl: 20px;
     --font-size-2xl: 24px;
-    --font-size-3xl: 30px;
-    --font-size-4xl: 36px;
-    
-    /* Transitions */
-    --transition-fast: 0.15s ease;
+    --font-size-3xl: 32px;
+    --font-size-4xl: 40px;
+
+    /* Smooth Transitions */
+    --transition-fast: 0.2s ease;
     --transition-base: 0.3s ease;
     --transition-slow: 0.5s ease;
 }
@@ -87,17 +84,19 @@ body {
     font-size: var(--font-size-base);
     line-height: 1.6;
     color: var(--text-primary);
-    background-color: var(--dashboard-bg); /* Use new background color */
+    background-color: var(--dashboard-bg);
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Page Level Containers */
 .page-background {
-    background: var(--dashboard-bg); /* Use new background color */
+    background: var(--dashboard-bg);
 }
 .main-container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: var(--spacing-xl);
 }
@@ -112,21 +111,21 @@ body {
 
 .page-title {
     font-size: var(--font-size-3xl);
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
     margin: 0;
 }
 .page-subtitle {
     font-size: var(--font-size-lg);
     color: var(--text-secondary);
-    margin: 0;
+    margin-top: var(--spacing-sm);
 }
 
 /* --- NEW FILTER PANEL STYLES --- */
 .filter-panel {
     display: flex;
     gap: var(--spacing-md);
-    align-items: center; /* Ensures button and dropdowns are aligned */
+    align-items: center;
 }
 .filter-panel .form-select {
     padding: var(--spacing-sm) var(--spacing-md);
@@ -134,7 +133,12 @@ body {
     border: 1px solid #d1d5db;
     background-color: var(--bg-primary);
     font-size: var(--font-size-sm);
-    min-width: 180px;
+    min-width: 200px;
+    transition: all var(--transition-fast);
+}
+
+.filter-panel .form-select:hover {
+    border-color: var(--primary-color);
 }
 
 
@@ -145,11 +149,11 @@ body {
     justify-content: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     font-size: var(--font-size-sm);
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.5;
     text-align: center;
     cursor: pointer;
     transition: all var(--transition-base);
@@ -158,32 +162,31 @@ body {
 }
 
 .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
+    filter: brightness(1.1);
 }
 
 .btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
+    filter: none;
 }
 
 /* Button Variants */
 .btn-primary {
-    background: var(--primary-gradient);
+    background: var(--primary-color);
     color: white;
 }
 .btn-secondary {
     background: var(--bg-primary);
     color: var(--text-primary);
-    border-color: var(--gray-color);
+    border-color: #d1d5db;
 }
 .btn-secondary:hover {
     background: var(--bg-muted);
+    border-color: var(--primary-color);
 }
 .btn-success {
-    background: var(--success-gradient);
+    background: var(--success-color);
     color: white;
 }
 .btn-sm {
@@ -194,9 +197,9 @@ body {
 
 /* Navigation Styles */
 .nav-bar {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e5e7eb;
     padding: var(--spacing-md) 0;
     position: sticky;
     top: 0;
@@ -204,7 +207,7 @@ body {
 }
 
 .nav-container {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -218,7 +221,7 @@ body {
 }
 
 .nav-logo {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
     font-weight: 800;
     color: var(--primary-color);
     margin: 0;
@@ -233,7 +236,7 @@ body {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
 }
 
 .nav-link {
@@ -243,8 +246,8 @@ body {
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
-    font-weight: 500;
-    transition: all var(--transition-fast);
+    font-weight: 600;
+    transition: all var(--transition-base);
     text-decoration: none;
 }
 
@@ -252,7 +255,6 @@ body {
 .nav-link.active {
     background: var(--primary-color);
     color: white;
-    transform: translateY(-1px);
 }
 
 .nav-status {
@@ -296,64 +298,62 @@ body {
 .metrics-grid {
     display: grid;
     gap: var(--spacing-lg);
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     margin-bottom: var(--spacing-xl);
 }
 .metric-card {
     background: var(--bg-primary);
-    border: 1px solid #EBEAE8;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    box-shadow: none;
+    box-shadow: var(--shadow-md);
     transition: all var(--transition-base);
 }
 .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
 }
 
 .metric-header {
-    display: contents; /* Unwraps the header to allow direct grid layout */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .metric-icon-wrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-xl);
     color: white;
-    margin-bottom: var(--spacing-sm);
 }
 .metric-icon-wrapper.bg-purple { background-color: var(--purple-color); }
 .metric-icon-wrapper.bg-orange { background-color: var(--warning-color); }
 .metric-icon-wrapper.bg-blue { background-color: var(--primary-color); }
 .metric-icon-wrapper.bg-green { background-color: var(--success-color); }
 
-
 .metric-title {
-    font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-size: var(--font-size-base);
+    font-weight: 600;
     color: var(--text-secondary);
-    text-transform: none;
-    letter-spacing: 0;
-    margin: 0;
+    margin: 0 0 var(--spacing-sm) 0;
 }
 .metric-value {
-    font-size: var(--font-size-2xl); /* Slightly smaller than before */
-    font-weight: 700;
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
     color: var(--text-primary);
-    line-height: 1.2;
+    line-height: 1.1;
 }
 .metric-trend {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: 500;
     color: var(--text-muted);
+    margin-top: auto;
 }
 .metric-trend.positive { color: var(--success-color); }
 .metric-trend.negative { color: var(--error-color); }
@@ -370,14 +370,13 @@ body {
 
 .chart-container-wrapper {
     background: var(--bg-primary);
-    border: 1px solid #EBEAE8;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
-    box-shadow: none;
+    box-shadow: var(--shadow-md);
 }
 .chart-title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
     margin-bottom: var(--spacing-md);
 }
 
@@ -387,11 +386,13 @@ body {
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 450px;
 }
 .auth-title {
     text-align: center;
     font-size: var(--font-size-2xl);
-    font-weight: 700;
+    font-weight: 800;
     color: var(--primary-color);
     margin-bottom: var(--spacing-sm);
 }
@@ -442,7 +443,7 @@ body {
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 /* Alert Styles */
@@ -460,7 +461,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     padding: var(--spacing-md);
-    min-width: 300px;
+    min-width: 320px;
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
@@ -582,9 +583,9 @@ body {
 .empty-state {
     text-align: center;
     padding: var(--spacing-2xl);
-    background: rgba(255, 255, 255, 0.5);
-    border: 2px dashed #d1d5db;
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
 }
 .empty-icon { font-size: 64px; margin-bottom: var(--spacing-lg); opacity: 0.5; }
 .empty-title { font-size: var(--font-size-xl); font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-sm); }
