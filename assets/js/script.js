@@ -124,7 +124,7 @@ async function handleFilterChange() {
         primaryReportData = primaryRes.data;
         secondaryReportData = secondaryRes.data;
 
-        // **FIXED**: Wait for the dashboard and charts to finish rendering.
+        // Wait for the dashboard and all its charts to finish rendering.
         await renderDashboard();
 
     } catch (error) {
@@ -138,7 +138,7 @@ async function handleFilterChange() {
 
 /**
  * Renders the entire dashboard by calling the static visualization methods.
- * This function is now async to await chart rendering.
+ * This function is now async to await the completion of all chart rendering.
  */
 async function renderDashboard() {
     if (primaryReportData.length === 0) {
@@ -146,10 +146,10 @@ async function renderDashboard() {
         return;
     }
     
-    // Create metrics first (this one is synchronous)
+    // Create metrics (synchronous)
     EnhancedDashboardComponents.createEnhancedMetrics('kpi-container', primaryReportData, secondaryReportData);
 
-    // **FIXED**: Wait for all chart rendering promises to complete.
+    // Wait for all asynchronous chart rendering promises to complete.
     await Promise.all([
         EnhancedDashboardComponents.createForecastComparisonChart('forecast-comparison-chart', primaryReportData, secondaryReportData),
         EnhancedDashboardComponents.createPickupPaceChart('weekly-pickup-chart', primaryReportData),
