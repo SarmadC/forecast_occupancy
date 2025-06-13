@@ -47,11 +47,11 @@ function renderUploaderUI() {
         <div id="drop-zone" class="drop-zone">
             <div class="drop-zone-prompt">
                 <span class="drop-zone-icon">📁</span>
-                <p class="drop-zone-title">Drag & drop your CSV file here</p>
+                <p class="drop-zone-title">Drag & drop your Excel or CSV file here</p>
                 <p class="drop-zone-subtitle">or click to select a file</p>
                 <label for="file-input" class="btn btn-primary">Browse Files</label>
-                <input type="file" id="file-input" class="sr-only" accept=".csv">
-                <p class="drop-zone-hint">Max file size: 50MB. Supported format: .csv</p>
+                <input type="file" id="file-input" class="sr-only" accept=".xlsx, .xls, .csv">
+                <p class="drop-zone-hint">Max file size: 50MB. Supported formats: .xlsx, .xls, .csv</p>
             </div>
         </div>
         <div id="upload-actions" class="form-actions" style="display: none; justify-content: center; margin-top: var(--spacing-lg);">
@@ -105,7 +105,7 @@ async function handleFile(file) {
 }
 
 /**
- * Reads and transforms a CSV file.
+ * Reads and transforms a CSV or Excel file.
  * @param {File} file The file to process.
  * @returns {Promise<Array<object>>} A promise that resolves with the transformed data.
  */
@@ -134,7 +134,7 @@ function processCsvFile(file) {
 // --- DATA TRANSFORMATION & VALIDATION ---
 
 /**
- * Transforms data from a simple, normalized CSV format.
+ * Transforms data from a simple, normalized CSV or Excel format.
  * @param {Array<Array<any>>} rawData The raw data from the worksheet.
  * @returns {Array<object>} The array of structured forecast records.
  */
@@ -158,7 +158,7 @@ function transformCsvData(rawData) {
     const required = ['as_of_date', 'forecast_date', 'market_segment', 'current_occupancy'];
     for(const col of required) {
         if (colIndices[col.replace(/_([a-z])/g, g => g[1].toUpperCase())] === -1) {
-             throw new Error(`Invalid CSV format. Missing required column: '${col}'.`);
+             throw new Error(`Invalid file format. Missing required column: '${col}'.`);
         }
     }
 
@@ -188,7 +188,7 @@ function validateTransformedData(data) {
 function validateFile(file) {
     if (file.size > AppConstants.DATABASE.MAX_FILE_SIZE) throw new Error(AppConstants.ERROR_MESSAGES.FILE_TOO_LARGE);
     const extension = '.' + file.name.split('.').pop().toLowerCase();
-    if (!['.csv'].includes(extension)) throw new Error("Invalid file format. Please upload .csv files only.");
+    if (!['.xlsx', '.xls', '.csv'].includes(extension)) throw new Error(AppConstants.ERROR_MESSAGES.INVALID_FILE_FORMAT);
 }
 
 // --- UTILITY FUNCTIONS ---
