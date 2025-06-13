@@ -242,9 +242,8 @@ async function handleUpload() {
         if (reportId) {
             const { data: existing, error: checkError } = await supabaseClient
                 .from(AppConstants.DATABASE.TABLE_NAME)
-                .select('id')
-                .eq('report_id', reportId)
-                .limit(1);
+                .select('id', { count: 'exact' })
+                .eq('report_id', reportId);
 
             if (checkError) throw new Error(`Failed to check for existing report: ${checkError.message}`);
 
@@ -290,11 +289,16 @@ async function handleUpload() {
         }
 
     } catch (error) {
+        // **FIXED**: Immediately hide loading animation on error, then show alert.
+        hideLoading();
         console.error('Upload failed:', error);
         showAlert(`Upload failed: ${error.message}`, 'error');
+        // Set uploadSucceeded to false to prevent UI reset in finally block
+        uploadSucceeded = false; 
     } finally {
-        hideLoading();
+        // Only hide loading and reset UI on success. On error, it's handled in the catch block.
         if (uploadSucceeded) {
+            hideLoading();
             document.getElementById('upload-actions').style.display = 'none';
             const previewContainer = document.getElementById('preview-container');
             if(previewContainer) {
