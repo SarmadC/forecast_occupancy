@@ -12,7 +12,7 @@ class EnhancedDashboardComponents {
      * @param {Array} primaryData Data for the primary report.
      * @param {Array} secondaryData Data for the comparison report.
      */
-    static createForecastComparisonChart(containerId, primaryData, secondaryData) {
+    static async createForecastComparisonChart(containerId, primaryData, secondaryData) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = ''; // Clear previous chart
@@ -52,7 +52,8 @@ class EnhancedDashboardComponents {
             tooltip: { x: { format: 'dd MMM yyyy' } },
             legend: { position: 'top', horizontalAlign: 'left' }
         };
-        new ApexCharts(container, options).render();
+        const chart = new ApexCharts(container, options);
+        return chart.render(); // Return the promise
     }
 
     /**
@@ -60,7 +61,7 @@ class EnhancedDashboardComponents {
      * @param {string} containerId - The ID of the container element.
      * @param {Array} data - Array of forecast data for the primary report.
      */
-    static createPickupPaceChart(containerId, data) {
+    static async createPickupPaceChart(containerId, data) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
@@ -76,7 +77,8 @@ class EnhancedDashboardComponents {
             yaxis: { title: { text: 'Rooms Picked Up' } },
             tooltip: { x: { format: 'dd MMM yyyy' } }
         };
-        new ApexCharts(container, options).render();
+        const chart = new ApexCharts(container, options);
+        return chart.render();
     }
 
     /**
@@ -84,7 +86,7 @@ class EnhancedDashboardComponents {
      * @param {string} containerId - The ID of the container element.
      * @param {Array} data - Array of forecast data.
      */
-    static createStlyVarianceHeatmap(containerId, data) {
+    static async createStlyVarianceHeatmap(containerId, data) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
@@ -120,11 +122,12 @@ class EnhancedDashboardComponents {
             dataLabels: { enabled: false },
             title: { text: 'Variance vs. Same Time Last Year (%)' }
         };
-        new ApexCharts(container, options).render();
+        const chart = new ApexCharts(container, options);
+        return chart.render();
     }
     
    /**
-     * Creates enhanced metric cards with trend indicators
+     * Creates enhanced metric cards. This function is synchronous and does not need to be awaited.
      * @param {string} containerId - The ID of the container element
      * @param {Array} data - Latest forecast data for the primary report
      * @param {Array} comparisonData - Data for the comparison report
@@ -143,7 +146,6 @@ class EnhancedDashboardComponents {
         const avgWeeklyPickup = totals.reduce((sum, d) => sum + d.weekly_pickup, 0) / totals.length;
         const highOccupancyDays = totals.filter(d => d.current_occupancy >= 80).length;
         
-        // Calculate trend for high occupancy days if comparison data is available
         let highOccupancyTrend = 'vs previous report';
         if(comparisonData && comparisonData.length > 0) {
             const comparisonTotals = comparisonData.filter(d => d.market_segment === 'Totals');

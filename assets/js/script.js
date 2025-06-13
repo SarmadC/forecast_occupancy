@@ -11,7 +11,7 @@ let secondaryReportData = []; // Data for the selected secondary report
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // **NEW**: Check for a user session before doing anything else.
+    // Check for a user session before doing anything else.
     const supabaseClient = window.SupabaseConfig.getClient();
     let session = null;
 
@@ -94,31 +94,27 @@ async function handleFilterChange() {
     const primaryDate = primaryDateSelect.value;
     const secondaryDate = secondaryDateSelect.value;
 
-    // --- New logic to disable the selected primary date in the secondary dropdown ---
-    // Iterate over the options in the secondary date dropdown
     for (const option of secondaryDateSelect.options) {
-        // Enable all options first to reset the state from previous changes
         option.disabled = false;
-        // If an option's value matches the selected primary date, disable it
         if (option.value === primaryDate) {
             option.disabled = true;
         }
     }
 
-    // If the currently selected secondary date is now disabled, reset it to "none"
     if (secondaryDateSelect.options[secondaryDateSelect.selectedIndex]?.disabled) {
         secondaryDateSelect.value = 'none';
     }
-    // --- End of new logic ---
 
     if (!city || !primaryDate) return;
 
     showLoading('Fetching report data...');
     try {
+        const selectColumns = 'as_of_date, city, forecast_date, market_segment, current_occupancy, weekly_pickup, stly_variance';
+
         const [primaryRes, secondaryRes] = await Promise.all([
-            supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', primaryDate),
+            supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select(selectColumns).eq('city', city).eq('as_of_date', primaryDate),
             (secondaryDateSelect.value && secondaryDateSelect.value !== 'none')
-                ? supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', secondaryDateSelect.value)
+                ? supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).select(selectColumns).eq('city', city).eq('as_of_date', secondaryDateSelect.value)
                 : Promise.resolve({ data: [], error: null })
         ]);
 
@@ -128,7 +124,8 @@ async function handleFilterChange() {
         primaryReportData = primaryRes.data;
         secondaryReportData = secondaryRes.data;
 
-        renderDashboard();
+        // **FIXED**: Wait for the dashboard and charts to finish rendering.
+        await renderDashboard();
 
     } catch (error) {
         handleError("Failed to fetch report data", error);
@@ -141,17 +138,23 @@ async function handleFilterChange() {
 
 /**
  * Renders the entire dashboard by calling the static visualization methods.
+ * This function is now async to await chart rendering.
  */
-function renderDashboard() {
+async function renderDashboard() {
     if (primaryReportData.length === 0) {
         renderEmptyState();
         return;
     }
-    // These are the clean, one-line calls to the new static methods
+    
+    // Create metrics first (this one is synchronous)
     EnhancedDashboardComponents.createEnhancedMetrics('kpi-container', primaryReportData, secondaryReportData);
-    EnhancedDashboardComponents.createForecastComparisonChart('forecast-comparison-chart', primaryReportData, secondaryReportData);
-    EnhancedDashboardComponents.createPickupPaceChart('weekly-pickup-chart', primaryReportData);
-    EnhancedDashboardComponents.createStlyVarianceHeatmap('stly-variance-heatmap', primaryReportData);
+
+    // **FIXED**: Wait for all chart rendering promises to complete.
+    await Promise.all([
+        EnhancedDashboardComponents.createForecastComparisonChart('forecast-comparison-chart', primaryReportData, secondaryReportData),
+        EnhancedDashboardComponents.createPickupPaceChart('weekly-pickup-chart', primaryReportData),
+        EnhancedDashboardComponents.createStlyVarianceHeatmap('stly-variance-heatmap', primaryReportData)
+    ]);
 }
 
 /**
