@@ -29,23 +29,26 @@ async function loadInitialData() {
     
     showLoading('Fetching available reports...');
     try {
-        // This assumes a 'get_distinct_reports' RPC function exists in Supabase
-        // that returns a JSON object with 'cities' and 'dates' arrays.
         const { data, error } = await supabaseClient.rpc('get_distinct_reports');
         if (error) throw error;
         
-        reportFilters = data; // The response is now { cities: [...], dates: [...] }
-        renderFilterPanel(reportFilters.cities, reportFilters.dates);
+        // **FIXED**: Safely handle null responses from the RPC call.
+        reportFilters = data || { cities: [], dates: [] };
+        const cities = reportFilters.cities || [];
+        const dates = reportFilters.dates || [];
         
-        if (reportFilters.dates && reportFilters.dates.length > 0) {
+        renderFilterPanel(cities, dates);
+        
+        if (dates.length > 0 && cities.length > 0) {
             // Automatically select and load the latest report.
-            const latestDate = reportFilters.dates[0]; // Dates are sorted descending in the SQL function.
-            const city = reportFilters.cities[0];
+            const latestDate = dates[0]; // Dates are sorted descending in the SQL function.
+            const city = cities[0];
             
             document.getElementById('filter_city').value = city;
             document.getElementById('filter_primary_as_of_date').value = latestDate;
             await handleFilterChange();
         } else {
+            // If there are no dates or cities, there's no data to show.
             renderEmptyState();
         }
 
