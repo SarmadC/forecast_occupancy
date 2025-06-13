@@ -148,8 +148,7 @@ class SharedComponents {
             </div>
         `;
     }
-
-    /**
+     /**
      * Creates a metric card component.
      * @param {object} config - The configuration for the metric card.
      * @returns {string} The HTML for the metric card.
@@ -287,29 +286,57 @@ async function checkPagePermissions() {
     }
 }
 
+// --- Singleton Loading Overlay ---
+// A global reference to the loading overlay to ensure only one ever exists.
+let loadingOverlayInstance = null;
+
+/**
+ * Displays a singleton loading overlay. If one is already visible, it just updates the message.
+ * @param {string} message - The message to display in the loading overlay.
+ * @param {number|null} progress - A value from 0-100 to show a progress bar.
+ */
 function showLoading(message = 'Loading...', progress = null) {
-    hideLoading();
-    const overlay = document.createElement('div');
-    overlay.innerHTML = SharedComponents.createLoadingOverlay(message, progress);
-    document.body.appendChild(overlay.firstElementChild);
+    if (loadingOverlayInstance) {
+        // If the overlay already exists, just update its content.
+        const msgElement = loadingOverlayInstance.querySelector('.loading-message');
+        if (msgElement) msgElement.textContent = message;
+
+        const progressFill = loadingOverlayInstance.querySelector('.progress-fill');
+        if (progressFill) progressFill.style.width = `${progress || 0}%`;
+        
+        const progressText = loadingOverlayInstance.querySelector('.progress-text');
+        if (progressText) progressText.textContent = `${Math.round(progress || 0)}%`;
+        
+    } else {
+        // If the overlay doesn't exist, create it.
+        const overlayContainer = document.createElement('div');
+        overlayContainer.innerHTML = SharedComponents.createLoadingOverlay(message, progress);
+        loadingOverlayInstance = overlayContainer.firstElementChild;
+        document.body.appendChild(loadingOverlayInstance);
+    }
 }
 
+/**
+ * Hides the singleton loading overlay.
+ */
 function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.add('loading-exit');
-        setTimeout(() => overlay.remove(), 300);
+    if (loadingOverlayInstance) {
+        loadingOverlayInstance.classList.add('loading-exit');
+        // After the exit animation completes, remove the element and clear the reference.
+        setTimeout(() => {
+            if (loadingOverlayInstance) {
+                loadingOverlayInstance.remove();
+            }
+            loadingOverlayInstance = null;
+        }, 300);
     }
 }
 
 function updateLoadingProgress(progress, message) {
-    const progressFill = document.querySelector('.progress-fill');
-    const progressText = document.querySelector('.progress-text');
-    const loadingMessage = document.querySelector('.loading-message');
-    
-    if (progressFill) progressFill.style.width = progress + '%';
-    if (progressText) progressText.textContent = Math.round(progress) + '%';
-    if (loadingMessage && message) loadingMessage.textContent = message;
+    // This function can now be simplified or integrated directly with showLoading
+    if (loadingOverlayInstance) {
+        showLoading(message || loadingOverlayInstance.querySelector('.loading-message').textContent, progress);
+    }
 }
 
 function showAlert(message, type = 'info', duration = 5000, actions = []) {
@@ -381,7 +408,6 @@ async function testConfigConnection() {
 
     resultDiv.textContent = 'Testing...';
     try {
-        // **FIXED**: Explicitly use window.supabase to refer to the CDN library
         const tempClient = window.supabase.createClient(url, key);
         const { error } = await tempClient.from(AppConstants.DATABASE.TABLE_NAME).select('id').limit(1);
         if (error && error.code !== '42P01') throw error;
@@ -393,4 +419,4 @@ async function testConfigConnection() {
     }
 }
 
-console.log('✅ Shared components (v4) loaded.');
+console.log('✅ Shared components (v5 - Singleton Loader) loaded.');
