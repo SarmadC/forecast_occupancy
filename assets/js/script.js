@@ -5,7 +5,7 @@
  */
 
 // --- GLOBAL STATE ---
-let allReports = []; // Stores metadata for all available reports (city, as_of_date)
+let reportFilters = { dates: [], cities: [] }; // Holds the available filter options.
 let primaryReportData = []; // Data for the selected primary report
 let secondaryReportData = []; // Data for the selected secondary report
 
@@ -24,17 +24,19 @@ async function loadInitialData() {
     showLoading('Fetching available reports...');
     try {
         // This assumes a 'get_distinct_reports' RPC function exists in Supabase
-        // that returns distinct combinations of as_of_date and city.
+        // that returns a JSON object with 'cities' and 'dates' arrays.
         const { data, error } = await supabase.rpc('get_distinct_reports');
         if (error) throw error;
         
-        allReports = data;
-        renderFilterPanel();
+        reportFilters = data; // The response is now { cities: [...], dates: [...] }
+        renderFilterPanel(reportFilters.cities, reportFilters.dates);
         
-        if (allReports.length > 0) {
-            // Automatically select and load the latest report
-            const latestDate = allReports[0].as_of_date;
-            const city = allReports[0].city;
+        if (reportFilters.dates && reportFilters.dates.length > 0) {
+            // Automatically select and load the latest report.
+            // Assumes the first city in the alphabetical list is a reasonable default.
+            const latestDate = reportFilters.dates[0]; // Dates are sorted descending in the SQL function.
+            const city = reportFilters.cities[0];
+            
             document.getElementById('filter_city').value = city;
             document.getElementById('filter_primary_as_of_date').value = latestDate;
             await handleFilterChange();
@@ -50,22 +52,43 @@ async function loadInitialData() {
 }
 
 /**
- * Fetches report data when a filter is changed.
+ * Fetches report data when a filter is changed and updates the UI.
+ * Also synchronizes the filter states to prevent comparing a report to itself.
  */
 async function handleFilterChange() {
-    const city = document.getElementById('filter_city').value;
-    const primaryDate = document.getElementById('filter_primary_as_of_date').value;
-    const secondaryDate = document.getElementById('filter_secondary_as_of_date').value;
+    const citySelect = document.getElementById('filter_city');
+    const primaryDateSelect = document.getElementById('filter_primary_as_of_date');
+    const secondaryDateSelect = document.getElementById('filter_secondary_as_of_date');
+
+    const city = citySelect.value;
+    const primaryDate = primaryDateSelect.value;
+    const secondaryDate = secondaryDateSelect.value;
+
+    // --- New logic to disable the selected primary date in the secondary dropdown ---
+    // Iterate over the options in the secondary date dropdown
+    for (const option of secondaryDateSelect.options) {
+        // Enable all options first to reset the state from previous changes
+        option.disabled = false;
+        // If an option's value matches the selected primary date, disable it
+        if (option.value === primaryDate) {
+            option.disabled = true;
+        }
+    }
+
+    // If the currently selected secondary date is now disabled, reset it to "none"
+    if (secondaryDateSelect.options[secondaryDateSelect.selectedIndex]?.disabled) {
+        secondaryDateSelect.value = 'none';
+    }
+    // --- End of new logic ---
 
     if (!city || !primaryDate) return;
 
     showLoading('Fetching report data...');
     try {
-        // Use Promise.all to fetch primary and secondary reports concurrently
         const [primaryRes, secondaryRes] = await Promise.all([
             supabase.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', primaryDate),
-            (secondaryDate && secondaryDate !== 'none')
-                ? supabase.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', secondaryDate)
+            (secondaryDateSelect.value && secondaryDateSelect.value !== 'none')
+                ? supabase.from(AppConstants.DATABASE.TABLE_NAME).select('*').eq('city', city).eq('as_of_date', secondaryDateSelect.value)
                 : Promise.resolve({ data: [], error: null })
         ]);
 
@@ -103,11 +126,11 @@ function renderDashboard() {
 
 /**
  * Renders the filter panel with dynamic options from the fetched report list.
+ * @param {string[]} distinctCities - An array of unique city names.
+ * @param {string[]} distinctDates - An array of unique, sorted report dates.
  */
-function renderFilterPanel() {
+function renderFilterPanel(distinctCities = [], distinctDates = []) {
     const container = document.getElementById('filter-panel-container');
-    const distinctCities = [...new Set(allReports.map(r => r.city))];
-    const distinctDates = [...new Set(allReports.map(r => r.as_of_date))].sort((a, b) => new Date(b) - new Date(a));
 
     const filtersHtml = `
         <div class="filter-grid">
@@ -157,3 +180,5 @@ function handleError(message, error) {
     showAlert(`${message}: ${error.message}`, 'error');
     renderEmptyState(true);
 }
+
+
