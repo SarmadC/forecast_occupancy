@@ -118,7 +118,7 @@ function renderDashboard() {
         return;
     }
     // These are the clean, one-line calls to the new static methods
-    EnhancedDashboardComponents.createEnhancedMetrics('kpi-container', primaryReportData);
+    EnhancedDashboardComponents.createEnhancedMetrics('kpi-container', primaryReportData, secondaryReportData);
     EnhancedDashboardComponents.createForecastComparisonChart('forecast-comparison-chart', primaryReportData, secondaryReportData);
     EnhancedDashboardComponents.createPickupPaceChart('weekly-pickup-chart', primaryReportData);
     EnhancedDashboardComponents.createStlyVarianceHeatmap('stly-variance-heatmap', primaryReportData);
@@ -133,30 +133,24 @@ function renderFilterPanel(distinctCities = [], distinctDates = []) {
     const container = document.getElementById('filter-panel-container');
 
     const filtersHtml = `
-        <div class="filter-grid">
-            <div class="filter-group">
-                <label for="filter_city" class="form-label">City</label>
-                <select id="filter_city" class="form-select" onchange="handleFilterChange()">
-                    ${distinctCities.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter_primary_as_of_date" class="form-label">Primary Report Date</label>
-                <select id="filter_primary_as_of_date" class="form-select" onchange="handleFilterChange()">
-                    ${distinctDates.map(d => `<option value="${d}">${formatDate(d, 'long')}</option>`).join('')}
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter_secondary_as_of_date" class="form-label">Comparison Report</label>
-                <select id="filter_secondary_as_of_date" class="form-select" onchange="handleFilterChange()">
-                    <option value="none">-- No Comparison --</option>
-                    ${distinctDates.map(d => `<option value="${d}">${formatDate(d, 'long')}</option>`).join('')}
-                </select>
-            </div>
-        </div>
+        <select id="filter_city" class="form-select" onchange="handleFilterChange()">
+            ${distinctCities.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+        <select id="filter_primary_as_of_date" class="form-select" onchange="handleFilterChange()">
+            <option value="">As of Date</option>
+            ${distinctDates.map(d => `<option value="${d}">${formatDate(d, 'long')}</option>`).join('')}
+        </select>
+        <select id="filter_secondary_as_of_date" class="form-select" onchange="handleFilterChange()">
+            <option value="none">-- Compare to --</option>
+            ${distinctDates.map(d => `<option value="${d}">${formatDate(d, 'long')}</option>`).join('')}
+        </select>
+        <select class="form-select" disabled>
+            <option>Date Range</option>
+        </select>
     `;
     container.innerHTML = filtersHtml;
 }
+
 
 /**
  * Renders an empty state message when no data is available or an error occurs.
@@ -180,5 +174,3 @@ function handleError(message, error) {
     showAlert(`${message}: ${error.message}`, 'error');
     renderEmptyState(true);
 }
-
-

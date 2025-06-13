@@ -93,7 +93,7 @@ class EnhancedDashboardComponents {
         const seriesData = {};
         
         totals.forEach(d => {
-            const month = formatDate(d.forecast_date, 'iso').substring(0, 7); // YYYY-MM
+            const month = formatDate(d.forecast_date, 'iso').substring(0, 7); // yyyy-MM
             if (!seriesData[month]) seriesData[month] = [];
             seriesData[month].push({ x: d.forecast_date, y: d.stly_variance });
         });
@@ -123,12 +123,13 @@ class EnhancedDashboardComponents {
         new ApexCharts(container, options).render();
     }
     
-    /**
+   /**
      * Creates enhanced metric cards with trend indicators
      * @param {string} containerId - The ID of the container element
-     * @param {Array} data - Latest forecast data
+     * @param {Array} data - Latest forecast data for the primary report
+     * @param {Array} comparisonData - Data for the comparison report
      */
-    static createEnhancedMetrics(containerId, data) {
+    static createEnhancedMetrics(containerId, data, comparisonData) {
         const container = document.getElementById(containerId);
         if (!container || !data || data.length === 0) {
             container.innerHTML = '';
@@ -141,12 +142,28 @@ class EnhancedDashboardComponents {
         const peakOccupancy = Math.max(...totals.map(d => d.current_occupancy));
         const avgWeeklyPickup = totals.reduce((sum, d) => sum + d.weekly_pickup, 0) / totals.length;
         const highOccupancyDays = totals.filter(d => d.current_occupancy >= 80).length;
+        
+        // Calculate trend for high occupancy days if comparison data is available
+        let highOccupancyTrend = 'vs previous report';
+        if(comparisonData && comparisonData.length > 0) {
+            const comparisonTotals = comparisonData.filter(d => d.market_segment === 'Totals');
+            const oldHighOccupancyDays = comparisonTotals.filter(d => d.current_occupancy >= 80).length;
+            const diff = highOccupancyDays - oldHighOccupancyDays;
+            if (diff > 0) {
+                highOccupancyTrend = `+${diff} days`;
+            } else if (diff < 0) {
+                highOccupancyTrend = `${diff} days`;
+            } else {
+                 highOccupancyTrend = `No change`;
+            }
+        }
+
 
         const cards = [
-            SharedComponents.createMetricCard({ title: 'City', value: data[0].city, icon: '🏙️' }),
-            SharedComponents.createMetricCard({ title: 'Peak Forecast Occupancy', value: formatPercentage(peakOccupancy), icon: '🏆', color: 'purple' }),
-            SharedComponents.createMetricCard({ title: 'Avg. Weekly Pickup', value: formatNumber(avgWeeklyPickup, 2), icon: '🚀', color: 'blue' }),
-            SharedComponents.createMetricCard({ title: 'High Occupancy Days (>80%)', value: highOccupancyDays, icon: '🔥', color: 'orange' })
+            SharedComponents.createMetricCard({ title: 'City', value: data[0].city, icon: '🏙️', trend: `Report from ${formatDate(data[0].as_of_date)}`, color: 'blue' }),
+            SharedComponents.createMetricCard({ title: 'Peak Forecast Occupancy', value: formatPercentage(peakOccupancy), icon: '🏆', trend: `Highest projected date`, color: 'purple' }),
+            SharedComponents.createMetricCard({ title: 'Avg. Weekly Pickup', value: formatNumber(avgWeeklyPickup, 1), icon: '📈', trend: `+${formatNumber(totals.reduce((sum, d) => sum + d.weekly_pickup, 0),0)} rooms total`, color: 'green' }),
+            SharedComponents.createMetricCard({ title: 'High Occupancy Days (>80%)', value: highOccupancyDays, icon: '🔥', trend: highOccupancyTrend, color: 'orange' })
         ];
         container.innerHTML = cards.join('');
     }

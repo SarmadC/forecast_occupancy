@@ -148,25 +148,25 @@ class SharedComponents {
             </div>
         `;
     }
-     /**
-     * Creates a metric card component.
+    
+    /**
+     * Creates a metric card component based on the new design.
      * @param {object} config - The configuration for the metric card.
      * @returns {string} The HTML for the metric card.
      */
     static createMetricCard(config) {
-        const { title, value, icon, color = 'blue' } = config;
+        const { title, value, icon, trend, color = 'blue' } = config;
+        const trendClass = trend ? (trend.startsWith('+') ? 'positive' : 'negative') : '';
         return `
-            <div class="metric-card metric-card-${color}">
-                <div class="metric-header">
-                    <div class="metric-info">
-                        <h3 class="metric-title">${title}</h3>
-                        <div class="metric-value">${value}</div>
-                    </div>
-                    <div class="metric-icon">${icon}</div>
-                </div>
+            <div class="metric-card">
+                <div class="metric-icon-wrapper bg-${color}">${icon}</div>
+                <h3 class="metric-title">${title}</h3>
+                <div class="metric-value">${value}</div>
+                ${trend ? `<div class="metric-trend ${trendClass}">${trend}</div>` : ''}
             </div>
         `;
     }
+
 
     /**
      * Creates an empty state component.

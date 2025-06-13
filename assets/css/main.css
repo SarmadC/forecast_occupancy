@@ -25,6 +25,8 @@
     --bg-secondary: #f8fafc;
     --bg-muted: #f1f5f9;
     --bg-overlay: rgba(0, 0, 0, 0.5);
+    /* New background for the dashboard page */
+    --dashboard-bg: #f8f7f4; 
     
     /* Gradients */
     --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
@@ -85,14 +87,14 @@ body {
     font-size: var(--font-size-base);
     line-height: 1.6;
     color: var(--text-primary);
-    background: var(--bg-gradient);
+    background-color: var(--dashboard-bg); /* Use new background color */
     min-height: 100vh;
     overflow-x: hidden;
 }
 
 /* Page Level Containers */
 .page-background {
-    background: var(--bg-gradient);
+    background: var(--dashboard-bg); /* Use new background color */
 }
 .main-container {
     max-width: 1400px;
@@ -100,19 +102,38 @@ body {
     padding: var(--spacing-xl);
 }
 
-.page-header {
+/* --- NEW DASHBOARD HEADER STYLES --- */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--spacing-xl);
 }
+
 .page-title {
     font-size: var(--font-size-3xl);
-    font-weight: 800;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
+    margin: 0;
 }
 .page-subtitle {
     font-size: var(--font-size-lg);
     color: var(--text-secondary);
     margin: 0;
+}
+
+/* --- NEW FILTER PANEL STYLES --- */
+.filter-panel {
+    display: flex;
+    gap: var(--spacing-md);
+}
+.filter-panel .form-select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid #d1d5db;
+    background-color: var(--bg-primary);
+    font-size: var(--font-size-sm);
+    min-width: 180px;
 }
 
 
@@ -172,14 +193,13 @@ body {
 
 /* Navigation Styles */
 .nav-bar {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: var(--spacing-md) 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: var(--shadow-sm);
 }
 
 .nav-container {
@@ -271,7 +291,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Metric Card Styles */
+/* --- REVAMPED METRIC CARD STYLES --- */
 .metrics-grid {
     display: grid;
     gap: var(--spacing-lg);
@@ -279,72 +299,83 @@ body {
     margin-bottom: var(--spacing-xl);
 }
 .metric-card {
-    background: var(--card-gradient);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--bg-primary);
+    border: 1px solid #EBEAE8;
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
-    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    box-shadow: none;
     transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
-}
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--primary-color);
-    opacity: 0;
-    transition: opacity var(--transition-base);
 }
 .metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
-.metric-card:hover::before {
-    opacity: 1;
-}
-.metric-card-blue::before { background: var(--primary-color); }
-.metric-card-purple::before { background: var(--purple-color); }
 
 .metric-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--spacing-md);
-}
-.metric-title {
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0 0 var(--spacing-sm) 0;
-}
-.metric-value {
-    font-size: var(--font-size-3xl);
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-}
-.metric-icon {
-    font-size: var(--font-size-3xl);
-    opacity: 0.7;
+    display: contents; /* Unwraps the header to allow direct grid layout */
 }
 
-/* Chart Styles */
+.metric-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: white;
+    margin-bottom: var(--spacing-sm);
+}
+.metric-icon-wrapper.bg-purple { background-color: var(--purple-color); }
+.metric-icon-wrapper.bg-orange { background-color: var(--warning-color); }
+.metric-icon-wrapper.bg-blue { background-color: var(--primary-color); }
+.metric-icon-wrapper.bg-green { background-color: var(--success-color); }
+
+
+.metric-title {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0;
+}
+.metric-value {
+    font-size: var(--font-size-2xl); /* Slightly smaller than before */
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+.metric-trend {
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.metric-trend.positive { color: var(--success-color); }
+.metric-trend.negative { color: var(--error-color); }
+
+/* --- REVAMPED CHART STYLES --- */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+}
+.chart-full-width {
+    grid-column: 1 / -1;
+}
+
 .chart-container-wrapper {
-    background: var(--card-gradient);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--bg-primary);
+    border: 1px solid #EBEAE8;
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
 }
 .chart-title {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     font-weight: 600;
     margin-bottom: var(--spacing-md);
 }
@@ -607,12 +638,20 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
     .nav-container {
         flex-direction: column;
         gap: var(--spacing-md);
         text-align: center;
     }
     .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-grid {
         grid-template-columns: 1fr;
     }
 }
