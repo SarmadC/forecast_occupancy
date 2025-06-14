@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Data - Occupancy Forecast</title>
+    <title>Upload Data - Occupancy Analytics Platform</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="stylesheet" href="/assets/css/uploader.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/uploader.css">
+    
+    <script src="assets/js/theme-manager.js" defer></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,23 +23,24 @@
     <header id="navigation"></header>
 
     <main class="main-container" id="uploader-main">
-        <div class="page-header">
+        <div class="page-header animate-fadeInDown">
             <h1 class="page-title">Upload Forecast Data</h1>
-            <p class="page-subtitle">Process and upload new Amadeus Excel reports to the database.</p>
+            <p class="page-subtitle">Import your Excel reports for instant analytics</p>
         </div>
-
-        <div id="uploader-component-container">
+        
+        <div id="uploader-component-container" class="animate-fadeInUp delay-100">
+            </div>
+        
+        <div id="preview-container" class="preview-container animate-fadeInUp delay-200" style="display: none;">
             </div>
 
-        <div id="preview-container" class="preview-container" style="display: none;">
-            </div>
+        <div id="upload-actions-container"></div>
     </main>
-
-    <script src="../config/constants.js"></script>
-    <script src="../config/supabase.js"></script>
-    <script src="../assets/js/components/shared-components.js"></script>
-
-    <script src="../assets/js/upload.js"></script>
+    
+    <script src="config/constants.js"></script>
+    <script src="config/supabase.js"></script>
+    <script src="assets/js/components/shared-components.js"></script>
+    <script src="assets/js/upload.js"></script>
 
 </body>
 </html>

@@ -1,43 +1,42 @@
 /**
  * @file upload.js
- * @description Handles all logic for the data uploader page, including file
- * selection, drag-and-drop, CSV parsing, data validation, and uploading to Supabase.
+ * @description Enhanced logic for the data uploader page. Handles file processing,
+ * validation, interactive UI updates, and batch uploading to Supabase.
  */
 
 // --- STATE MANAGEMENT ---
-let processedData = []; // Holds the validated data from the file.
+const uploaderState = {
+    file: null,
+    processedData: [],
+    isValid: false,
+    isUploading: false,
+};
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check for a user session before doing anything else.
+    // Redirect to login if no session exists.
     const supabaseClient = window.SupabaseConfig.getClient();
-    let session = null;
-
     if (supabaseClient) {
-        const { data } = await supabaseClient.auth.getSession();
-        session = data.session;
-    }
-
-    if (!session) {
-        // If no user is logged in, redirect to the login page.
-        window.location.replace(window.AppConstants?.ROUTES?.LOGIN || 'login.html');
-        return; // Stop further script execution
-    }
-
-    // If a session exists, proceed with initializing the uploader page.
-    const isConfigured = initializePage('uploader');
-    if (!isConfigured) {
-        console.warn("Uploader initialization halted: Supabase not configured.");
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            window.location.replace(window.AppConstants.ROUTES.LOGIN);
+            return;
+        }
+    } else {
+        window.location.replace(window.AppConstants.ROUTES.LOGIN);
         return;
     }
-    renderUploaderUI();
-});
 
+    // Initialize the page and render the uploader UI.
+    initializePage('uploader');
+    renderUploaderUI();
+    bindEventListeners();
+});
 
 // --- UI RENDERING ---
 
 /**
- * Renders the initial file input and drop zone UI.
+ * Renders the initial state of the uploader.
  */
 function renderUploaderUI() {
     const container = document.getElementById('uploader-component-container');
@@ -46,70 +45,133 @@ function renderUploaderUI() {
     container.innerHTML = `
         <div id="drop-zone" class="drop-zone">
             <div class="drop-zone-prompt">
-                <span class="drop-zone-icon">📁</span>
-                <p class="drop-zone-title">Drag & drop your Excel or CSV file here</p>
-                <p class="drop-zone-subtitle">or click to select a file</p>
-                <label for="file-input" class="btn btn-primary">Browse Files</label>
+                <div class="drop-zone-icon animate-float">📤</div>
+                <h2 class="drop-zone-title">Drag & Drop Your File</h2>
+                <p class="drop-zone-subtitle">or</p>
+                <button onclick="document.getElementById('file-input').click()" class="btn btn-primary">
+                    Browse Files
+                </button>
                 <input type="file" id="file-input" class="sr-only" accept=".xlsx, .xls, .csv">
-                <p class="drop-zone-hint">Max file size: 50MB. Supported formats: .xlsx, .xls, .csv</p>
+                <div class="file-type-icons">
+                     <span>Excel (.xlsx)</span>
+                     <span>CSV (.csv)</span>
+                </div>
             </div>
         </div>
-        <div id="upload-actions" class="form-actions" style="display: none; justify-content: center; margin-top: var(--spacing-lg);">
-            <button id="upload-button" class="btn btn-success btn-lg">
-                🚀 Upload to Database
+    `;
+}
+
+/**
+ * Updates the UI to show a preview of the selected file.
+ */
+function renderFilePreview() {
+    const dropZone = document.getElementById('drop-zone');
+    if (!dropZone || !uploaderState.file) return;
+
+    dropZone.innerHTML = `
+        <div class="file-preview-card animate-scaleIn">
+            <div class="file-preview-icon">📄</div>
+            <div class="file-preview-info">
+                <div class="file-preview-name">${uploaderState.file.name}</div>
+                <div class="file-preview-details">
+                    ${(uploaderState.file.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+            </div>
+            <div class="file-preview-actions">
+                <button class="btn btn-secondary btn-sm" onclick="resetUploaderState()">Change File</button>
+            </div>
+        </div>
+    `;
+    dropZone.classList.remove('drag-over');
+    dropZone.style.borderStyle = 'solid';
+}
+
+/**
+ * Renders the data preview table and validation results.
+ */
+function renderDataPreview() {
+    const previewContainer = document.getElementById('preview-container');
+    const actionsContainer = document.getElementById('upload-actions-container');
+    if (!previewContainer || !actionsContainer) return;
+
+    previewContainer.style.display = 'block';
+
+    const columns = Object.keys(uploaderState.processedData[0]).map(key => ({
+        key: key,
+        label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    }));
+
+    previewContainer.innerHTML = `
+        ${SharedComponents.createDataTable({
+            data: uploaderState.processedData.slice(0, 100), // Preview first 100 rows
+            columns: columns,
+            title: 'Data Preview (First 100 Rows)',
+        })}
+    `;
+    
+    // Render sticky upload button
+    actionsContainer.innerHTML = `
+        <div id="upload-actions" class="animate-fadeInUp">
+             <button id="upload-button" class="btn btn-success btn-lg">
+                <span class="btn-text">🚀 Finalize and Upload Data</span>
+                <span class="btn-loading" style="display:none;">
+                    <span class="spinner-small"></span> Uploading...
+                </span>
             </button>
         </div>
     `;
-
-    // Attach event listeners after rendering the form.
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const uploadButton = document.getElementById('upload-button');
-
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', handleFileDrop);
-    fileInput.addEventListener('change', handleFileSelect);
-    uploadButton.addEventListener('click', handleUpload);
+    document.getElementById('upload-button').addEventListener('click', handleUpload);
 }
 
+// --- EVENT BINDING ---
+
+function bindEventListeners() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    if (dropZone) {
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', handleFileDrop);
+    }
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+}
 
 // --- FILE HANDLING & PROCESSING ---
 
 function handleFileSelect(e) { handleFile(e.target.files[0]); }
-function handleFileDrop(e) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); }
+function handleFileDrop(e) { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }
 
-/**
- * Main function to process a single file.
- * @param {File} file The file to be processed.
- */
 async function handleFile(file) {
     if (!file) return;
 
     try {
-        validateFile(file);
+        validateFileMetadata(file);
+        uploaderState.file = file;
         showLoading('Processing file...');
-        const transformedData = await processCsvFile(file);
         
-        processedData = transformedData; // Store valid data
-        renderPreviewTable(transformedData.slice(0, 100)); // Show a preview of the first 100 rows
-        document.getElementById('upload-actions').style.display = 'flex';
-        showAlert('File processed successfully. Review the preview below.', 'success');
+        renderFilePreview(); // Show file info immediately
 
+        const data = await parseFile(file);
+        const validatedData = validateDataRows(data);
+        
+        uploaderState.processedData = validatedData;
+        uploaderState.isValid = true;
+
+        renderDataPreview();
+        showAlert('File processed successfully. Review the preview below.', 'success');
     } catch (error) {
-        showAlert(error.message, 'error');
+        showAlert(error.message, 'error', 8000);
         console.error("File processing failed:", error);
+        resetUploaderState();
     } finally {
         hideLoading();
     }
 }
 
-/**
- * Reads and transforms a CSV or Excel file.
- * @param {File} file The file to process.
- * @returns {Promise<Array<object>>} A promise that resolves with the transformed data.
- */
-function processCsvFile(file) {
+function parseFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -117,222 +179,146 @@ function processCsvFile(file) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null, raw: false });
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+                
+                const header = jsonData[0].map(h => String(h || '').trim().toLowerCase().replace(/ /g, '_'));
+                const dataRows = jsonData.slice(1);
 
-                const transformedData = transformCsvData(rawData);
-                validateTransformedData(transformedData);
-                resolve(transformedData);
-            } catch (error) {
-                reject(error);
+                const mappedData = dataRows.map(row => {
+                    const rowData = {};
+                    header.forEach((h, i) => {
+                        rowData[h] = row[i];
+                    });
+                    return rowData;
+                });
+                
+                resolve(mappedData);
+            } catch (err) {
+                reject(new Error('Failed to parse file content. Ensure it is a valid Excel or CSV file.'));
             }
         };
-        reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+        reader.onerror = () => reject(new Error('There was an error reading the file.'));
         reader.readAsArrayBuffer(file);
     });
 }
 
-// --- DATA TRANSFORMATION & VALIDATION ---
+// --- DATA VALIDATION ---
 
-/**
- * Transforms data from a simple, normalized CSV or Excel format.
- * @param {Array<Array<any>>} rawData The raw data from the worksheet.
- * @returns {Array<object>} The array of structured forecast records.
- */
-function transformCsvData(rawData) {
-    const header = rawData[0].map(h => String(h || '').trim().toLowerCase());
-    const dataRows = rawData.slice(1);
-
-    const colIndices = {
-        asOfDate: header.findIndex(h => h === 'as_of_date'),
-        reportId: header.findIndex(h => h === 'report_id'),
-        city: header.findIndex(h => h === 'city'),
-        forecastDate: header.findIndex(h => h === 'forecast_date'),
-        marketSegment: header.findIndex(h => h === 'market_segment'),
-        currentOccupancy: header.findIndex(h => h === 'current_occupancy'),
-        stlyVariance: header.findIndex(h => h === 'stly_variance'),
-        weeklyPickup: header.findIndex(h => h === 'weekly_pickup'),
-        daysOut: header.findIndex(h => h === 'days_out'),
-        forecastHorizon: header.findIndex(h => h === 'forecast_horizon')
-    };
-
-    const required = ['as_of_date', 'forecast_date', 'market_segment', 'current_occupancy'];
-    for(const col of required) {
-        if (colIndices[col.replace(/_([a-z])/g, g => g[1].toUpperCase())] === -1) {
-             throw new Error(`Invalid file format. Missing required column: '${col}'.`);
-        }
-    }
-
-    return dataRows.map(row => ({
-        as_of_date: parseDate(row[colIndices.asOfDate]),
-        report_id: row[colIndices.reportId],
-        city: row[colIndices.city],
-        forecast_date: parseDate(row[colIndices.forecastDate]),
-        market_segment: row[colIndices.marketSegment],
-        current_occupancy: parseNumber(row[colIndices.currentOccupancy]),
-        stly_variance: parseNumber(row[colIndices.stlyVariance]),
-        weekly_pickup: parseNumber(row[colIndices.weeklyPickup]),
-        days_out: parseNumber(row[colIndices.daysOut]),
-        forecast_horizon: row[colIndices.forecastHorizon],
-    })).filter(row => row.as_of_date && row.forecast_date); // Filter out any empty rows
-}
-
-
-function validateTransformedData(data) {
-    if (!data || data.length === 0) throw new Error('No data was extracted from the file.');
-    const firstRecord = data[0];
-    for (const field of AppConstants.VALIDATION.REQUIRED_COLUMNS) {
-        if (!(field in firstRecord)) throw new Error(`Data is missing required field: ${field}`);
-    }
-}
-
-function validateFile(file) {
+function validateFileMetadata(file) {
     if (file.size > AppConstants.DATABASE.MAX_FILE_SIZE) throw new Error(AppConstants.ERROR_MESSAGES.FILE_TOO_LARGE);
     const extension = '.' + file.name.split('.').pop().toLowerCase();
     if (!['.xlsx', '.xls', '.csv'].includes(extension)) throw new Error(AppConstants.ERROR_MESSAGES.INVALID_FILE_FORMAT);
 }
 
-// --- UTILITY FUNCTIONS ---
-
-function parseDate(dateValue) {
-    if (!dateValue) return null;
-    try {
-        if (typeof dateValue === 'number') {
-            const date = new Date((dateValue - 25569) * 86400 * 1000);
-            return date.toISOString().split('T')[0];
+function validateDataRows(data) {
+    if (!data || data.length === 0) throw new Error('No data rows found in the file.');
+    
+    // Check for required columns in the first row
+    const firstRow = data[0];
+    for (const col of AppConstants.VALIDATION.REQUIRED_COLUMNS) {
+        if (!(col in firstRow)) {
+            throw new Error(`Data validation failed. Missing required column: '${col}'.`);
         }
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
-    } catch { /* fall through */ }
-    return null;
+    }
+
+    // Sanitize and type-cast each row
+    return data.map((row, index) => {
+        const asOfDate = formatDate(row.as_of_date, 'iso');
+        const forecastDate = formatDate(row.forecast_date, 'iso');
+        
+        if (!asOfDate || !forecastDate) return null; // Skip rows with invalid dates
+
+        return {
+            as_of_date: asOfDate,
+            city: String(row.city || 'N/A'),
+            forecast_date: forecastDate,
+            market_segment: String(row.market_segment || 'Other'),
+            current_occupancy: parseFloat(row.current_occupancy || 0),
+            stly_variance: parseFloat(row.stly_variance || 0),
+            weekly_pickup: parseInt(row.weekly_pickup || 0),
+        };
+    }).filter(row => row !== null); // Filter out any rows that were invalid
 }
 
-function parseNumber(value) {
-    if (typeof value === 'number' && !isNaN(value)) return value;
-    if (typeof value === 'string') {
-        const parsed = parseFloat(value.replace(/[^0-9.-]/g, ''));
-        return isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
-}
 
 // --- DATA UPLOAD ---
 
-/**
- * Handles the final upload of processed data to Supabase.
- */
 async function handleUpload() {
-    if (processedData.length === 0) {
-        showAlert('No data to upload.', 'error');
+    if (!uploaderState.isValid || uploaderState.processedData.length === 0) {
+        showAlert('No valid data to upload.', 'error');
         return;
     }
     
     const supabaseClient = window.SupabaseConfig.getClient();
     if (!supabaseClient) {
-        showAlert("Cannot connect to the database. Please configure the connection first.", "error");
+        showAlert(AppConstants.ERROR_MESSAGES.CONNECTION_FAILED, 'error');
         return;
     }
 
-    showLoading('Preparing to upload...');
-    let uploadSucceeded = false;
-
+    const uploadBtn = document.getElementById('upload-button');
+    const btnText = uploadBtn.querySelector('.btn-text');
+    const btnLoading = uploadBtn.querySelector('.btn-loading');
+    
     try {
-        const reportId = processedData[0].report_id;
-        let proceedWithUpload = true;
-
-        if (reportId) {
-            const { data: existing, error: checkError } = await supabaseClient
-                .from(AppConstants.DATABASE.TABLE_NAME)
-                .select('id', { count: 'exact' })
-                .eq('report_id', reportId);
-
-            if (checkError) throw new Error(`Failed to check for existing report: ${checkError.message}`);
-
-            if (existing && existing.length > 0) {
-                const confirmed = await showModal(
-                    'Overwrite Report?',
-                    `A report named "<strong>${reportId}</strong>" already exists. Do you want to delete the old data and replace it with this new upload?`
-                );
-
-                if (confirmed) {
-                    showLoading('Deleting old report...');
-                    const { error: deleteError } = await supabaseClient
-                        .from(AppConstants.DATABASE.TABLE_NAME)
-                        .delete()
-                        .eq('report_id', reportId);
-
-                    if (deleteError) throw new Error(`Failed to delete old report: ${deleteError.message}`);
-                    showAlert('Old report deleted. Starting new upload.', 'info');
-                } else {
-                    proceedWithUpload = false;
-                }
-            }
-        }
+        uploaderState.isUploading = true;
+        uploadBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
         
-        if (proceedWithUpload) {
-            showLoading('Uploading data to database...', 0);
-            for (let i = 0; i < processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
-                const batch = processedData.slice(i, i + AppConstants.DATABASE.BATCH_SIZE);
-                const { error } = await supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
-                if (error) throw error;
-                
-                const progress = ((i + batch.length) / processedData.length) * 100;
-                updateLoadingProgress(progress, `Uploading... ${Math.round(progress)}%`);
-            }
-            uploadSucceeded = true;
-            showAlert(AppConstants.SUCCESS_MESSAGES.FILE_UPLOADED, 'success', 10000, [{
-                label: 'Go to Dashboard',
-                type: 'primary',
-                onClick: `location.href='${AppConstants.ROUTES.DASHBOARD}'`
-            }]);
-        } else {
-            showAlert('Upload cancelled by user.', 'info');
+        showLoading('Uploading data to database...', 0);
+
+        // Batch upload process
+        for (let i = 0; i < uploaderState.processedData.length; i += AppConstants.DATABASE.BATCH_SIZE) {
+            const batch = uploaderState.processedData.slice(i, i + AppConstants.DATABASE.BATCH_SIZE);
+            const { error } = await supabaseClient.from(AppConstants.DATABASE.TABLE_NAME).insert(batch);
+            if (error) throw error;
+            
+            const progress = ((i + batch.length) / uploaderState.processedData.length) * 100;
+            updateLoadingProgress(progress);
         }
+
+        showAlert(AppConstants.SUCCESS_MESSAGES.FILE_UPLOADED, 'success', 10000);
+        resetUploaderState(true);
 
     } catch (error) {
-        // **FIXED**: Immediately hide loading animation on error, then show alert.
-        hideLoading();
+        hideLoading(); // Hide loading overlay immediately on error
         console.error('Upload failed:', error);
         showAlert(`Upload failed: ${error.message}`, 'error');
-        // Set uploadSucceeded to false to prevent UI reset in finally block
-        uploadSucceeded = false; 
     } finally {
-        // Only hide loading and reset UI on success. On error, it's handled in the catch block.
-        if (uploadSucceeded) {
-            hideLoading();
-            document.getElementById('upload-actions').style.display = 'none';
-            const previewContainer = document.getElementById('preview-container');
-            if(previewContainer) {
-                previewContainer.innerHTML = '';
-                previewContainer.style.display = 'none';
-            }
-            processedData = [];
-        }
+        uploaderState.isUploading = false;
+        uploadBtn.disabled = false;
+        btnText.style.display = 'inline-flex';
+        btnLoading.style.display = 'none';
     }
 }
 
+// --- UTILITY & STATE RESET ---
 
-/**
- * Renders a data table preview using SharedComponents.
- * @param {Array<object>} data - The data to render in the table.
- */
-function renderPreviewTable(data) {
-    let container = document.getElementById('preview-container');
-    if (!container) {
-        const main = document.querySelector('.main-container');
-        container = document.createElement('div');
-        container.id = 'preview-container';
-        main.appendChild(container);
+function resetUploaderState(isSuccess = false) {
+    uploaderState.file = null;
+    uploaderState.processedData = [];
+    uploaderState.isValid = false;
+
+    if (isSuccess) {
+        const container = document.getElementById('uploader-component-container');
+        container.innerHTML = `
+            <div class="empty-state animate-scaleIn">
+                <div class="empty-icon">✅</div>
+                <h2 class="empty-title">Upload Successful!</h2>
+                <p class="empty-message">Your data has been successfully imported and is now available on the dashboard.</p>
+                <div class="empty-actions">
+                    <button class="btn btn-secondary" onclick="resetUploaderState()">Upload Another File</button>
+                    <a href="${AppConstants.ROUTES.DASHBOARD}" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            </div>
+        `;
+    } else {
+        renderUploaderUI();
     }
-    container.style.display = 'block';
-
-    const columns = Object.keys(data[0]).map(key => ({
-        key: key,
-        label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    }));
-
-    container.innerHTML = SharedComponents.createDataTable({
-        data: data,
-        columns: columns,
-        title: 'Data Preview (First 100 Rows)',
-    });
+    
+    // Clear preview and actions
+    const previewContainer = document.getElementById('preview-container');
+    const actionsContainer = document.getElementById('upload-actions-container');
+    if (previewContainer) previewContainer.innerHTML = '';
+    if (actionsContainer) actionsContainer.innerHTML = '';
 }

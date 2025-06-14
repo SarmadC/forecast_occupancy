@@ -1,20 +1,11 @@
 /**
- * @file shared-components.js
- * @description This file contains the SharedComponents class which provides reusable, static UI components
- * used across the entire application, such as navigation, modals, alerts, and data displays.
- * It also includes global helper functions to easily invoke these components.
+ * Enhanced Shared Components with modern UI elements
  */
 
-/**
- * Shared UI Components
- * A static class providing methods to generate HTML for reusable components.
- */
 class SharedComponents {
     
     /**
-     * Creates the main navigation bar for the application.
-     * @param {string} [currentPage='dashboard'] - The identifier for the currently active page.
-     * @returns {string} The HTML string for the navigation bar.
+     * Creates the enhanced navigation bar with theme toggle
      */
     static createNavigation(currentPage = 'dashboard') {
         const navItems = [
@@ -23,27 +14,34 @@ class SharedComponents {
         ];
 
         const connectionStatus = window.SupabaseConfig?.isConfigured() ? 
-            '<span class="connection-status connected">🟢 Connected</span>' : 
-            '<span class="connection-status disconnected">🔴 Not Connected</span>';
+            '<span class="connection-status connected">Connected</span>' : 
+            '<span class="connection-status disconnected">Not Connected</span>';
 
         return `
             <nav class="nav-bar">
                 <div class="nav-container">
                     <div class="nav-brand">
-                        <div class="nav-logo">🏨 Occupancy Analytics</div>
-                        <div class="nav-subtitle">Forecast Intelligence Platform</div>
+                        <h1 class="nav-logo">🏨 Occupancy Analytics</h1>
+                        <p class="nav-subtitle">Forecast Intelligence Platform</p>
                     </div>
                     <div class="nav-links">
                         ${navItems.map(item => `
                             <a href="${item.route}" class="nav-link ${currentPage === item.id ? 'active' : ''}" data-page="${item.id}">
-                                <span class="nav-icon">${item.label.split(' ')[0]}</span>
-                                <span class="nav-text">${item.label.substring(item.label.indexOf(' ') + 1)}</span>
+                                ${item.label}
                             </a>
                         `).join('')}
                     </div>
                     <div class="nav-status">
                         ${connectionStatus}
-                        <button onclick="showConfigModal()" class="nav-config-btn" title="Configure Connection">⚙️</button>
+                        <div class="nav-actions">
+                            <button onclick="toggleTheme()" class="theme-toggle" title="Toggle Theme">
+                                <span class="theme-icon-light">☀️</span>
+                                <span class="theme-icon-dark" style="display: none;">🌙</span>
+                            </button>
+                            <button onclick="showConfigModal()" class="nav-config-btn" title="Configure Connection">
+                                ⚙️
+                            </button>
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -51,49 +49,47 @@ class SharedComponents {
     }
 
     /**
-     * Creates a full-screen loading overlay.
-     * @param {string} [message='Loading...'] - The message to display.
-     * @param {number|null} [progress=null] - A value from 0-100 to show a progress bar.
-     * @returns {string} The HTML string for the loading overlay.
+     * Creates an enhanced loading overlay with progress ring
      */
     static createLoadingOverlay(message = 'Loading...', progress = null) {
-        const progressBar = progress !== null ? `
-            <div class="loading-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${progress}%"></div>
-                </div>
-                <div class="progress-text">${Math.round(progress)}%</div>
-            </div>
-        ` : '';
+        const progressElement = progress !== null ? `
+            <svg class="progress-ring" viewBox="0 0 120 120">
+                <circle class="progress-ring-circle" cx="60" cy="60" r="54"></circle>
+                <circle class="progress-ring-progress" cx="60" cy="60" r="54"
+                    stroke-dasharray="${339.292}"
+                    stroke-dashoffset="${339.292 - (progress / 100) * 339.292}">
+                </circle>
+            </svg>
+            <div class="progress-text">${Math.round(progress)}%</div>
+        ` : '<div class="loading-spinner"></div>';
 
         return `
             <div id="loadingOverlay" class="loading-overlay">
-                <div class="loading-content">
-                    <div class="loading-spinner"></div>
+                <div class="loading-content animate-scaleIn">
+                    ${progressElement}
                     <div class="loading-message">${message}</div>
-                    ${progressBar}
                 </div>
             </div>
         `;
     }
 
     /**
-     * Creates a dismissible alert notification.
-     * @param {string} message - The alert message.
-     * @param {string} [type='info'] - The alert type ('success', 'error', 'warning', 'info').
-     * @param {number} [duration=5000] - Auto-dismiss duration in ms. 0 for permanent.
-     * @param {Array<object>} [actions=[]] - Action buttons to add to the alert.
-     * @returns {string} The HTML string for the alert.
+     * Creates enhanced alert with better animations
      */
     static createAlert(message, type = 'info', duration = 5000, actions = []) {
-        const alertIcons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+        const alertIcons = { 
+            success: '✅', 
+            error: '❌', 
+            warning: '⚠️', 
+            info: 'ℹ️' 
+        };
         const alertId = 'alert_' + Date.now();
         
         if (duration > 0) {
             setTimeout(() => {
                 const alertEl = document.getElementById(alertId);
                 if (alertEl) {
-                    alertEl.classList.add('alert-exit');
+                    alertEl.style.animation = 'slideOutRight 0.3s ease forwards';
                     setTimeout(() => alertEl.remove(), 300);
                 }
             }, duration);
@@ -101,110 +97,86 @@ class SharedComponents {
 
         return `
             <div id="${alertId}" class="alert alert-${type}" role="alert">
-                <div class="alert-icon">${alertIcons[type]}</div>
+                <div class="alert-icon animate-bounce">${alertIcons[type]}</div>
                 <div class="alert-message">${message}</div>
-                <button onclick="this.parentElement.remove()" class="alert-close">×</button>
+                <button onclick="this.parentElement.style.animation='slideOutRight 0.3s ease forwards'; setTimeout(() => this.parentElement.remove(), 300)" class="alert-close">×</button>
             </div>
         `;
     }
 
     /**
-     * Creates the configuration modal for Supabase credentials.
-     * @returns {string} The HTML string for the configuration modal.
-     */
-    static createConfigModal() {
-        const currentConfig = window.SupabaseConfig?.getStatus() || { connected: false, url: '', key: '' };
-        
-        return `
-            <div id="configModal" class="modal-overlay">
-                <div class="modal-backdrop" onclick="closeConfigModal()"></div>
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>🔧 Database Configuration</h2>
-                        <button onclick="closeConfigModal()" class="modal-close">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="configForm" class="form">
-                             <div class="form-group">
-                                 <label for="modalSupabaseUrl" class="form-label">Supabase Project URL</label>
-                                 <input type="url" id="modalSupabaseUrl" required class="form-input"
-                                     placeholder="https://your-project.supabase.co"
-                                     value="${currentConfig.url || ''}">
-                             </div>
-                             <div class="form-group">
-                                 <label for="modalSupabaseKey" class="form-label">Anon/Public Key</label>
-                                 <input type="password" id="modalSupabaseKey" required class="form-input"
-                                     placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                                     value="${currentConfig.key || ''}">
-                             </div>
-                             <div class="form-actions">
-                                 <button type="button" onclick="testConfigConnection()" class="btn btn-secondary">Test Connection</button>
-                                 <button type="submit" class="btn btn-primary">Save Configuration</button>
-                             </div>
-                        </form>
-                        <div id="connectionTestResult" style="margin-top: 1rem;"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-     /**
-     * Creates a metric card component.
-     * @param {object} config - The configuration for the metric card.
-     * @returns {string} The HTML for the metric card.
+     * Creates enhanced metric card with sparkline support
      */
     static createMetricCard(config) {
-        const { title, value, icon, trend, color = 'blue' } = config;
+        const { title, value, icon, trend, color = 'blue', sparklineData = null } = config;
+        const sparkline = sparklineData ? `
+            <div class="metric-sparkline">
+                <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        points="${sparklineData.map((v, i) => `${i * (100 / (sparklineData.length - 1))},${40 - (v * 40 / Math.max(...sparklineData))}`).join(' ')}"
+                    />
+                </svg>
+            </div>
+        ` : '';
+
         return `
-            <div class="metric-card metric-card-${color}">
+            <div class="metric-card">
                 <div class="metric-header">
                     <div class="metric-info">
                         <h3 class="metric-title">${title}</h3>
                         <div class="metric-value">${value}</div>
+                        ${trend ? `<div class="metric-trend ${trend.includes('+') ? 'positive' : trend.includes('-') ? 'negative' : ''}">${trend}</div>` : ''}
                     </div>
-                    <div class="metric-icon">${icon}</div>
+                    <div class="metric-icon-wrapper bg-${color}">
+                        ${icon}
+                    </div>
                 </div>
-                ${trend ? `<div class="metric-trend">${trend}</div>` : ''}
+                ${sparkline}
             </div>
         `;
     }
 
     /**
-     * Creates an empty state component.
-     * @param {object} config - Configuration for the empty state.
-     * @returns {string} The HTML for the empty state.
+     * Creates skeleton loading states
      */
-    static createEmptyState(config) {
-        const { icon, title, message, actions = [] } = config;
-        return `
-            <div class="empty-state">
-                <div class="empty-icon">${icon}</div>
-                <h3 class="empty-title">${title}</h3>
-                <p class="empty-message">${message}</p>
-                <div class="empty-actions">
-                    ${actions.map(action => `<button onclick="${action.onClick}" class="btn btn-${action.type || 'primary'}">${action.label}</button>`).join('')}
-                </div>
-            </div>
-        `;
+    static createSkeleton(type = 'text', customClass = '') {
+        const types = {
+            text: 'skeleton skeleton-text',
+            title: 'skeleton skeleton-title',
+            card: 'skeleton skeleton-card',
+            chart: 'skeleton skeleton-chart'
+        };
+        
+        return `<div class="${types[type] || types.text} ${customClass}"></div>`;
     }
 
     /**
-     * Creates a data table.
-     * @param {object} config - Configuration for the data table.
-     * @returns {string} The HTML for the data table.
+     * Creates enhanced data table with search and sort
      */
     static createDataTable(config) {
-        const { data, columns, title } = config;
+        const { data, columns, title, searchable = true, sortable = true } = config;
+        const tableId = 'table_' + Date.now();
+        
         return `
             <div class="data-table-container">
                 <div class="table-header">
                     <h3>${title}</h3>
+                    <div class="table-actions">
+                        ${searchable ? `<input type="text" class="table-search" placeholder="Search..." onkeyup="filterTable('${tableId}', this.value)">` : ''}
+                    </div>
                 </div>
                 <div class="table-wrapper">
-                    <table class="data-table">
+                    <table class="data-table" id="${tableId}">
                         <thead>
                             <tr>
-                                ${columns.map(col => `<th>${col.label}</th>`).join('')}
+                                ${columns.map((col, index) => `
+                                    <th ${sortable ? `class="sortable" onclick="sortTable('${tableId}', ${index})"` : ''}>
+                                        ${col.label}
+                                    </th>
+                                `).join('')}
                             </tr>
                         </thead>
                         <tbody>
@@ -219,96 +191,64 @@ class SharedComponents {
             </div>
         `;
     }
-}
 
-
-// --- GLOBAL HELPER FUNCTIONS ---
-
-/**
- * Initializes the current page by rendering the navigation, checking for configuration,
- * and verifying user permissions. This is the entry point for all page scripts.
- * @param {string} pageName - A name for the page being initialized (e.g., 'dashboard', 'uploader').
- * @returns {boolean} True if initialization can proceed, false otherwise.
- */
-function initializePage(pageName) {
-    console.log(`Initializing ${pageName} page...`);
-
-    // Render the main navigation on every page.
-    const navContainer = document.getElementById('navigation');
-    if (navContainer) {
-        navContainer.innerHTML = SharedComponents.createNavigation(pageName);
+    /**
+     * Creates a floating action button
+     */
+    static createFAB(icon, onClick) {
+        return `
+            <button class="fab" onclick="${onClick}">
+                ${icon}
+            </button>
+        `;
     }
 
-    // Check if Supabase is configured. If not, show a permanent alert and stop.
-    if (!window.SupabaseConfig.isConfigured()) {
-        showAlert('Database not configured. Please set up your connection.', 'warning', 0, [{
-            label: 'Configure Now',
-            type: 'primary',
-            onClick: 'showConfigModal()'
-        }]);
-        return false;
+    /**
+     * Creates tooltip wrapper
+     */
+    static createTooltip(content, tooltipText) {
+        return `
+            <div class="tooltip">
+                ${content}
+                <span class="tooltip-content">${tooltipText}</span>
+            </div>
+        `;
     }
 
-    // If configured, proceed with checking permissions.
-    checkPagePermissions();
-    
-    return true;
-}
-
-/**
- * Checks if the current user has the required role to view the current page.
- * This is called automatically by initializePage.
- */
-async function checkPagePermissions() {
-    const isUploadPage = window.location.pathname.includes('upload.html');
-    
-    // Only protect the upload page for now. Other pages are public.
-    if (isUploadPage) {
-        const role = await getUserRole(); // Uses the function from supabase.js
-        const authorizedRoles = ['admin', 'uploader'];
-
-        if (!authorizedRoles.includes(role)) {
-            // Block the main content and show an access denied message.
-            const mainContent = document.querySelector('main');
-            if (mainContent) {
-                mainContent.innerHTML = SharedComponents.createEmptyState({
-                    icon: '🚫',
-                    title: 'Access Denied',
-                    message: 'You do not have permission to view this page. Redirecting to the dashboard...',
-                });
-            }
-            
-            // Redirect after a short delay so the user can read the message.
-            setTimeout(() => {
-                window.location.href = AppConstants.ROUTES.DASHBOARD; 
-            }, 3000);
-        }
+    /**
+     * Creates breadcrumb navigation
+     */
+    static createBreadcrumb(items) {
+        return `
+            <nav class="breadcrumb">
+                ${items.map((item, index) => `
+                    ${index > 0 ? '<span class="breadcrumb-separator">›</span>' : ''}
+                    ${item.link ? 
+                        `<a href="${item.link}" class="breadcrumb-item">${item.label}</a>` : 
+                        `<span class="breadcrumb-item breadcrumb-current">${item.label}</span>`
+                    }
+                `).join('')}
+            </nav>
+        `;
     }
 }
 
-// --- Singleton Loading Overlay ---
-// A global reference to the loading overlay to ensure only one ever exists.
-let loadingOverlayInstance = null;
-
-/**
- * Displays a singleton loading overlay. If one is already visible, it just updates the message.
- * @param {string} message - The message to display in the loading overlay.
- * @param {number|null} progress - A value from 0-100 to show a progress bar.
- */
+// Enhanced helper functions
 function showLoading(message = 'Loading...', progress = null) {
     if (loadingOverlayInstance) {
-        // If the overlay already exists, just update its content.
         const msgElement = loadingOverlayInstance.querySelector('.loading-message');
         if (msgElement) msgElement.textContent = message;
 
-        const progressFill = loadingOverlayInstance.querySelector('.progress-fill');
-        if (progressFill) progressFill.style.width = `${progress || 0}%`;
-        
-        const progressText = loadingOverlayInstance.querySelector('.progress-text');
-        if (progressText) progressText.textContent = `${Math.round(progress || 0)}%`;
-        
+        if (progress !== null) {
+            const progressCircle = loadingOverlayInstance.querySelector('.progress-ring-progress');
+            if (progressCircle) {
+                const circumference = 339.292;
+                progressCircle.style.strokeDashoffset = circumference - (progress / 100) * circumference;
+            }
+            const progressText = loadingOverlayInstance.querySelector('.progress-text');
+            if (progressText) progressText.textContent = `${Math.round(progress)}%`;
+        }
     } else {
-        // If the overlay doesn't exist, create it.
         const overlayContainer = document.createElement('div');
         overlayContainer.innerHTML = SharedComponents.createLoadingOverlay(message, progress);
         loadingOverlayInstance = overlayContainer.firstElementChild;
@@ -316,107 +256,60 @@ function showLoading(message = 'Loading...', progress = null) {
     }
 }
 
-/**
- * Hides the singleton loading overlay.
- */
-function hideLoading() {
-    if (loadingOverlayInstance) {
-        loadingOverlayInstance.classList.add('loading-exit');
-        // After the exit animation completes, remove the element and clear the reference.
-        setTimeout(() => {
-            if (loadingOverlayInstance) {
-                loadingOverlayInstance.remove();
-            }
-            loadingOverlayInstance = null;
-        }, 300);
-    }
-}
-
-function updateLoadingProgress(progress, message) {
-    // This function can now be simplified or integrated directly with showLoading
-    if (loadingOverlayInstance) {
-        showLoading(message || loadingOverlayInstance.querySelector('.loading-message').textContent, progress);
-    }
-}
-
-function showAlert(message, type = 'info', duration = 5000, actions = []) {
-    let container = document.getElementById('alertsContainer');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'alertsContainer';
-        container.className = 'alerts-container';
-        document.body.appendChild(container);
-    }
+// Table sorting function
+function sortTable(tableId, columnIndex) {
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const th = table.querySelectorAll('th')[columnIndex];
     
-    const alertDiv = document.createElement('div');
-    alertDiv.innerHTML = SharedComponents.createAlert(message, type, duration, actions);
-    container.appendChild(alertDiv.firstElementChild);
+    const isAsc = th.classList.contains('asc');
+    table.querySelectorAll('th').forEach(header => header.classList.remove('asc', 'desc'));
+    
+    rows.sort((a, b) => {
+        const aValue = a.cells[columnIndex].textContent;
+        const bValue = b.cells[columnIndex].textContent;
+        
+        if (!isNaN(aValue) && !isNaN(bValue)) {
+            return isAsc ? bValue - aValue : aValue - bValue;
+        }
+        return isAsc ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+    });
+    
+    th.classList.add(isAsc ? 'desc' : 'asc');
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
 }
 
-function showConfigModal() {
-    const existing = document.getElementById('configModal');
-    if (existing) existing.remove();
+// Table filtering function
+function filterTable(tableId, searchTerm) {
+    const table = document.getElementById(tableId);
+    const rows = table.querySelectorAll('tbody tr');
+    const term = searchTerm.toLowerCase();
     
-    const modal = document.createElement('div');
-    modal.innerHTML = SharedComponents.createConfigModal();
-    document.body.appendChild(modal.firstElementChild);
-    
-    document.getElementById('configForm').onsubmit = handleConfigSubmit;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? '' : 'none';
+    });
 }
 
-function closeConfigModal() {
-    const modal = document.getElementById('configModal');
-    if (modal) {
-        modal.classList.add('modal-exit');
-        setTimeout(() => modal.remove(), 300);
-    }
+// Theme toggle function
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update theme toggle icon
+    document.querySelector('.theme-icon-light').style.display = newTheme === 'light' ? 'inline' : 'none';
+    document.querySelector('.theme-icon-dark').style.display = newTheme === 'dark' ? 'inline' : 'none';
 }
 
-async function handleConfigSubmit(e) {
-    e.preventDefault();
-    const url = document.getElementById('modalSupabaseUrl').value.trim();
-    const key = document.getElementById('modalSupabaseKey').value.trim();
-    
-    if (!url || !key) {
-        showAlert('Please provide both URL and API key', 'error');
-        return;
-    }
-    
-    showLoading('Saving and verifying connection...');
-    try {
-        window.SupabaseConfig.configure(url, key);
-        await window.SupabaseConfig.testConnection();
-        hideLoading();
-        closeConfigModal();
-        showAlert(window.AppConstants.SUCCESS_MESSAGES.CONFIG_SAVED, 'success');
-        setTimeout(() => location.reload(), 1500);
-    } catch (error) {
-        hideLoading();
-        showAlert(`Configuration failed: ${error.message}`, 'error');
-    }
-}
+// Initialize theme on load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+});
 
-async function testConfigConnection() {
-    const url = document.getElementById('modalSupabaseUrl').value.trim();
-    const key = document.getElementById('modalSupabaseKey').value.trim();
-    const resultDiv = document.getElementById('connectionTestResult');
-    
-    if (!url || !key) {
-        showAlert('Please provide both URL and API key to test.', 'error');
-        return;
-    }
-
-    resultDiv.textContent = 'Testing...';
-    try {
-        const tempClient = window.supabase.createClient(url, key);
-        const { error } = await tempClient.from(AppConstants.DATABASE.TABLE_NAME).select('id').limit(1);
-        if (error && error.code !== '42P01') throw error;
-        resultDiv.textContent = '✅ Connection successful!';
-        resultDiv.style.color = 'var(--success-color)';
-    } catch (error) {
-        resultDiv.textContent = `❌ Connection failed: ${error.message}`;
-        resultDiv.style.color = 'var(--error-color)';
-    }
-}
-
-console.log('✅ Shared components (v5 - Singleton Loader) loaded.');
+console.log('✅ Enhanced shared components loaded.');

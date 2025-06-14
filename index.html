@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occupancy Dashboard</title>
+    <title>Occupancy Dashboard - Modern Analytics Platform</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
     
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,38 +20,48 @@
     <header id="navigation"></header>
 
     <main class="main-container" id="dashboard-main">
-        <div class="dashboard-header">
-            <h1 class="page-title">Overview</h1>
+        <div class="dashboard-header animate-fadeInDown">
+            <div>
+                <h1 class="page-title">Analytics Overview</h1>
+                <p class="page-subtitle">Real-time occupancy insights and forecasting</p>
+            </div>
             <div id="filter-panel-container" class="filter-panel">
-                </div>
+                <!-- Filters will be inserted here -->
+            </div>
         </div>
 
         <div id="kpi-container" class="metrics-grid">
-            </div>
+            <!-- KPI cards will be inserted here -->
+        </div>
         
         <div class="chart-grid">
-            <div class="chart-container-wrapper chart-full-width">
+            <div class="chart-container-wrapper chart-full-width animate-fadeInUp">
                 <h2 class="chart-title">📈 Forecast Comparison</h2>
                 <div id="forecast-comparison-chart" class="chart-canvas"></div>
             </div>
 
-            <div class="chart-container-wrapper">
-                <h2 class="chart-title">🚀 Weekly Pickup</h2>
+            <div class="chart-container-wrapper animate-fadeInUp delay-200">
+                <h2 class="chart-title">🚀 Weekly Pickup Pace</h2>
                 <div id="weekly-pickup-chart" class="chart-canvas"></div>
             </div>
 
-            <div class.chart-container-wrapper">
-                 <h2 class="chart-title">🗓️ STLY Variance Heatmap</h2>
+            <div class="chart-container-wrapper animate-fadeInUp delay-300">
+                <h2 class="chart-title">🗓️ Year-over-Year Performance</h2>
                 <div id="stly-variance-heatmap" class="chart-canvas"></div>
             </div>
         </div>
     </main>
 
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="location.href='upload.html'">
+        ➕
+    </button>
+
     <script src="config/constants.js"></script>
     <script src="config/supabase.js"></script>
+    <script src="assets/js/theme-manager.js"></script>
     <script src="assets/js/components/shared-components.js"></script>
     <script src="assets/js/dashboard-visuals.js"></script>
-    
     <script src="assets/js/script.js"></script>
 
 </body>

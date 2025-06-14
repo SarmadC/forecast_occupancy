@@ -96,6 +96,46 @@ window.AppConstants = {
         FILE_UPLOADED: 'File uploaded successfully!',
         DATA_REFRESHED: 'Dashboard data refreshed!',
         CONFIG_SAVED: 'Configuration saved successfully!'
+    },
+
+    // Enhanced UI Configuration
+    UI: {
+        ANIMATIONS: {
+            DURATION: {
+                FAST: 150,
+                BASE: 200,
+                SLOW: 300,
+                SPRING: 500
+            },
+            EASING: {
+                DEFAULT: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                SPRING: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                BOUNCE: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+            }
+        },
+        BREAKPOINTS: {
+            MOBILE: 640,
+            TABLET: 768,
+            DESKTOP: 1024,
+            WIDE: 1280
+        },
+        Z_INDEX: {
+            DROPDOWN: 50,
+            STICKY: 100,
+            FIXED: 200,
+            MODAL_BACKDROP: 1000,
+            MODAL: 1100,
+            NOTIFICATION: 1200,
+            TOOLTIP: 1300
+        }
+    },
+    
+    // Keyboard Shortcuts
+    SHORTCUTS: {
+        SEARCH: { key: 'k', modifiers: ['cmd', 'ctrl'] },
+        UPLOAD: { key: 'u', modifiers: ['cmd', 'ctrl'] },
+        HELP: { key: '?', modifiers: ['shift'] },
+        ESCAPE: { key: 'Escape' }
     }
 };
 
@@ -141,15 +181,18 @@ window.formatPercentage = function(value, decimals = 1) {
 };
 
 /**
- * Formats a date string into a more readable format.
+ * Formats a date string into a more readable format, handling timezone issues.
  * @param {string|Date|null|undefined} dateString - The date to format.
  * @param {string} [format='short'] - The desired format ('short', 'long', 'iso').
  * @returns {string} The formatted date string, or 'N/A'.
  */
 window.formatDate = function(dateString, format = 'short') {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-
+    
+    // To prevent timezone issues, parse YYYY-MM-DD by replacing hyphens,
+    // which helps browsers interpret it in the local timezone consistently.
+    const date = dateString instanceof Date ? dateString : new Date(dateString.replace(/-/g, '/'));
+    
     // Check for invalid date
     if (isNaN(date.getTime())) return 'N/A';
     
@@ -162,7 +205,11 @@ window.formatDate = function(dateString, format = 'short') {
                 day: 'numeric'
             });
         case 'iso':
-            return date.toISOString().split('T')[0];
+            // To get the correct YYYY-MM-DD in the local timezone
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         case 'short':
         default:
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
